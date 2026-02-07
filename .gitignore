@@ -21,6 +21,7 @@ build/
 output/
 test_output/
 demo_output/
+security_test/
 *.log
 
 # Sample/test data
