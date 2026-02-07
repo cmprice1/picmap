@@ -1,0 +1,116 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.41939722222223,
+          37.7749
+        ]
+      },
+      "properties": {
+        "filename": "photo_01_San_Francisco_CA.jpg",
+        "timestamp": "2024-07-15T09:00:00",
+        "index": 0,
+        "path": "sample_photos/photo_01_San_Francisco_CA.jpg"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.4179,
+          36.7783
+        ]
+      },
+      "properties": {
+        "filename": "photo_02_Fresno_CA.jpg",
+        "timestamp": "2024-07-15T11:00:00",
+        "index": 1,
+        "path": "sample_photos/photo_02_Fresno_CA.jpg"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.2437,
+          34.05219722222222
+        ]
+      },
+      "properties": {
+        "filename": "photo_03_Los_Angeles_CA.jpg",
+        "timestamp": "2024-07-15T13:00:00",
+        "index": 2,
+        "path": "sample_photos/photo_03_Los_Angeles_CA.jpg"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.82599722222221,
+          35.68699722222222
+        ]
+      },
+      "properties": {
+        "filename": "photo_04_Barstow_CA.jpg",
+        "timestamp": "2024-07-15T15:00:00",
+        "index": 3,
+        "path": "sample_photos/photo_04_Barstow_CA.jpg"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.13979722222223,
+          36.16989722222222
+        ]
+      },
+      "properties": {
+        "filename": "photo_05_Las_Vegas_NV.jpg",
+        "timestamp": "2024-07-15T17:00:00",
+        "index": 4,
+        "path": "sample_photos/photo_05_Las_Vegas_NV.jpg"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -122.41939722222223,
+            37.7749
+          ],
+          [
+            -119.4179,
+            36.7783
+          ],
+          [
+            -118.2437,
+            34.05219722222222
+          ],
+          [
+            -117.82599722222221,
+            35.68699722222222
+          ],
+          [
+            -115.13979722222223,
+            36.16989722222222
+          ]
+        ]
+      },
+      "properties": {
+        "type": "route"
+      }
+    }
+  ]
+}
