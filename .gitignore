@@ -20,6 +20,7 @@ build/
 # Generated files
 output/
 test_output/
+demo_output/
 *.log
 
 # Sample/test data
