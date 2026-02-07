@@ -19,7 +19,11 @@ build/
 
 # Generated files
 output/
+test_output/
 *.log
+
+# Sample/test data
+sample_photos/
 
 # OS
 .DS_Store
