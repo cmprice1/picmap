@@ -49,7 +49,7 @@ def create_sample_photo_with_gps(filename, latitude, longitude, timestamp):
 
 def main():
     # Create sample_photos directory
-    output_dir = "/home/runner/work/picmap/picmap/sample_photos"
+    output_dir = os.path.join(os.path.dirname(__file__), "sample_photos")
     os.makedirs(output_dir, exist_ok=True)
     
     # Sample road trip: San Francisco -> Los Angeles -> Las Vegas
@@ -72,7 +72,7 @@ def main():
     
     print(f"\n✅ Created {len(locations)} sample photos in: {output_dir}")
     print(f"\nTest the app with:")
-    print(f"  python picmap.py {output_dir}")
+    print(f"  python picmap.py {os.path.abspath(output_dir)}")
 
 
 if __name__ == '__main__':
