@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Generated files
+output/
+test_output/
+demo_output/
+security_test/
+*.log
+
+# Sample/test data
+sample_photos/
+
+# OS
+.DS_Store
+Thumbs.db
