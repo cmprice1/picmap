@@ -355,8 +355,9 @@ def process_photos(
 
         cache_misses += 1
         response = geocode_func(lat, lon)
-        upsert_geocode_cache(conn, lat_rounded, lon_rounded, provider, response)
-        mark_geocoded(conn, path)
+        if response is not None:
+            upsert_geocode_cache(conn, lat_rounded, lon_rounded, provider, response)
+            mark_geocoded(conn, path)
 
     conn.commit()
     conn.close()
