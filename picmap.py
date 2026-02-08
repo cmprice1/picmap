@@ -207,7 +207,7 @@ def generate_geojson(photos: List[Dict]) -> Dict:
 
 def save_geojson(geojson: Dict, output_path: str):
     """Save GeoJSON to file."""
-    with open(output_path, 'w') as f:
+    with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(geojson, f, indent=2)
     print(f"\nGeoJSON saved to: {output_path}")
 
@@ -496,10 +496,10 @@ document.addEventListener('DOMContentLoaded', initMap);
     # Save files
     os.makedirs(output_dir, exist_ok=True)
     
-    with open(os.path.join(output_dir, 'index.html'), 'w') as f:
+    with open(os.path.join(output_dir, 'index.html'), 'w', encoding='utf-8') as f:
         f.write(html_content)
     
-    with open(os.path.join(output_dir, 'app.js'), 'w') as f:
+    with open(os.path.join(output_dir, 'app.js'), 'w', encoding='utf-8') as f:
         f.write(js_content)
     
     print(f"HTML app created in: {output_dir}")
