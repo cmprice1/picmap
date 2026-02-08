@@ -308,7 +308,7 @@ def generate_thumbnails(photos: List[Dict], output_dir: str) -> None:
         else:
             filename = _build_fallback_thumbnail_name(source_path)
 
-        thumbnail_rel_path = os.path.join("thumbnails", filename)
+        thumbnail_rel_path = f"thumbnails/{filename}"
         thumbnail_full_path = os.path.join(output_dir, thumbnail_rel_path)
 
         try:
