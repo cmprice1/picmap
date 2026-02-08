@@ -72,7 +72,7 @@ def main():
     
     print(f"\n✅ Created {len(locations)} sample photos in: {output_dir}")
     print(f"\nTest the app with:")
-    print(f"  python picmap.py {os.path.abspath(output_dir)}")
+    print(f"  python -m picmap {os.path.abspath(output_dir)}")
 
 
 if __name__ == '__main__':

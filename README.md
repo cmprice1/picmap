@@ -30,7 +30,7 @@ git clone https://github.com/cmprice1/picmap.git
 cd picmap
 
 # Install dependencies and run
-pip install -r requirements.txt && python picmap.py /path/to/your/photos
+pip install -r requirements.txt && python -m picmap /path/to/your/photos
 ```
 
 That's it! Your browser will automatically open to `http://localhost:8000` showing your interactive road trip map.
@@ -42,33 +42,33 @@ That's it! Your browser will automatically open to `http://localhost:8000` showi
 Process photos from a directory and start the web server:
 
 ```bash
-python picmap.py /path/to/photos
+python -m picmap /path/to/photos
 ```
 
 ### Advanced Options
 
 ```bash
 # Specify custom output directory
-python picmap.py /path/to/photos -o ./my-trip-map
+python -m picmap /path/to/photos -o ./my-trip-map
 
 # Use a different port
-python picmap.py /path/to/photos -p 8080
+python -m picmap /path/to/photos -p 8080
 
 # Generate files only (no server)
-python picmap.py /path/to/photos --no-server
+python -m picmap /path/to/photos --no-server
 ```
 
 ### View Help
 
 ```bash
-python picmap.py --help
+python -m picmap --help
 ```
 
 ## 📁 Project Structure
 
 ```
 picmap/
-├── picmap.py           # Main Python script
+├── picmap/             # PicMap package
 ├── requirements.txt    # Python dependencies
 ├── README.md          # This file
 └── output/            # Generated files (created automatically)
@@ -144,7 +144,7 @@ If you don't have photos with GPS data, you can:
 
 ### Changing Map Style
 
-Edit `picmap.py` in the `create_html_app` function to use different tile providers:
+Edit `picmap/app.py` in the `create_html_app` function to use different tile providers:
 
 ```javascript
 // Alternative free tile providers:
