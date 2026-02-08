@@ -18,7 +18,7 @@ python create_sample_photos.py > /dev/null
 
 # Test 3: Generate map (no server)
 echo -e "\n[3/5] Generating map from photos..."
-python picmap.py sample_photos -o test_run --no-server > /dev/null 2>&1
+python picmap.py sample_photos -o test_run --no-server --no-geocode > /dev/null 2>&1
 [ -f test_run/index.html ] && echo "✓ HTML generated"
 [ -f test_run/app.js ] && echo "✓ JavaScript generated"
 [ -f test_run/route.geojson ] && echo "✓ GeoJSON generated"
