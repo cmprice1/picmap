@@ -15,7 +15,7 @@ from datetime import datetime
 from typing import List, Dict, Optional, Tuple
 
 try:
-    from PIL import Image
+    from PIL import Image, ImageOps
     import piexif
     from geopy.geocoders import Nominatim
     from geopy.extra.rate_limiter import RateLimiter
@@ -137,6 +137,7 @@ def extract_photo_data(photo_path: str) -> Optional[Dict]:
         return {
             "filename": filename,
             "path": photo_path,
+            "source_path": photo_path,
             "latitude": coordinates[0],
             "longitude": coordinates[1],
             "timestamp": timestamp or os.path.getmtime(photo_path),
@@ -706,11 +707,16 @@ Examples:
     # Create output directory
     output_dir = args.output
     os.makedirs(output_dir, exist_ok=True)
-    
+
+    generate_thumbnails(photos, output_dir)
+
+    # Generate GeoJSON
+    geojson = generate_geojson(photos)
+
     # Save GeoJSON
     geojson_path = os.path.join(output_dir, 'route.geojson')
     save_geojson(geojson, geojson_path)
-    
+
     # Create HTML app
     create_html_app(output_dir, args.photos_dir)
     
