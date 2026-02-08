@@ -17,6 +17,8 @@ from typing import List, Dict, Optional, Tuple
 try:
     from PIL import Image
     import piexif
+    from geopy.geocoders import Nominatim
+    from geopy.extra.rate_limiter import RateLimiter
 except ImportError:
     print("Error: Required packages not installed. Run: pip install -r requirements.txt")
     sys.exit(1)
@@ -154,6 +156,73 @@ def scan_photos(directory: str) -> List[Dict]:
     return photos
 
 
+def format_location(address: Dict) -> Optional[str]:
+    """
+    Format a reverse geocoded address into a human-friendly location name.
+    """
+    if not address:
+        return None
+
+    primary = (
+        address.get('attraction')
+        or address.get('tourism')
+        or address.get('amenity')
+        or address.get('leisure')
+        or address.get('natural')
+        or address.get('shop')
+        or address.get('road')
+        or address.get('neighbourhood')
+        or address.get('suburb')
+        or address.get('village')
+        or address.get('town')
+        or address.get('city')
+        or address.get('county')
+        or address.get('state')
+        or address.get('country')
+    )
+
+    secondary = (
+        address.get('city')
+        or address.get('town')
+        or address.get('village')
+        or address.get('state')
+        or address.get('country')
+    )
+
+    if primary and secondary and primary != secondary:
+        return f"{primary}, {secondary}"
+    return primary or secondary
+
+
+def add_location_data(photos: List[Dict]) -> None:
+    """
+    Enrich photo metadata with location names via reverse geocoding.
+    """
+    geolocator = Nominatim(user_agent="picmap")
+    reverse = RateLimiter(geolocator.reverse, min_delay_seconds=1)
+    cache: Dict[Tuple[float, float], Optional[str]] = {}
+
+    for photo in photos:
+        lat = photo['latitude']
+        lon = photo['longitude']
+        cache_key = (round(lat, 5), round(lon, 5))
+
+        if cache_key in cache:
+            photo['location'] = cache[cache_key]
+            continue
+
+        location_name = None
+        try:
+            location = reverse((lat, lon), zoom=10, language='en')
+            if location and hasattr(location, 'raw'):
+                location_name = format_location(location.raw.get('address', {}))
+        except Exception:
+            location_name = None
+
+        cache[cache_key] = location_name
+        photo['location'] = location_name
+
+
 def generate_geojson(photos: List[Dict]) -> Dict:
     """
     Generate GeoJSON FeatureCollection from photo data.
@@ -178,7 +247,8 @@ def generate_geojson(photos: List[Dict]) -> Dict:
                 "filename": photo['filename'],
                 "timestamp": str(photo['timestamp']),
                 "index": i,
-                "path": photo['path']
+                "path": photo['path'],
+                "location": photo.get('location')
             }
         }
         features.append(feature)
@@ -207,7 +277,7 @@ def generate_geojson(photos: List[Dict]) -> Dict:
 
 def save_geojson(geojson: Dict, output_path: str):
     """Save GeoJSON to file."""
-    with open(output_path, 'w') as f:
+    with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(geojson, f, indent=2)
     print(f"\nGeoJSON saved to: {output_path}")
 
@@ -408,10 +478,11 @@ function displayRoute(geojson) {
             
             // Create popup with photo preview
             const timestamp = new Date(props.timestamp).toLocaleString();
+            const location = props.location || 'Unknown location';
             const popupContent = `
                 <div class="photo-popup">
                     <img src="${props.path}" alt="${props.filename}" onerror="this.style.display='none'">
-                    <h3>${props.filename}</h3>
+                    <h3>${location}</h3>
                     <p>📅 ${timestamp}</p>
                     <p>📍 ${coords[1].toFixed(6)}, ${coords[0].toFixed(6)}</p>
                 </div>
@@ -496,10 +567,10 @@ document.addEventListener('DOMContentLoaded', initMap);
     # Save files
     os.makedirs(output_dir, exist_ok=True)
     
-    with open(os.path.join(output_dir, 'index.html'), 'w') as f:
+    with open(os.path.join(output_dir, 'index.html'), 'w', encoding='utf-8') as f:
         f.write(html_content)
     
-    with open(os.path.join(output_dir, 'app.js'), 'w') as f:
+    with open(os.path.join(output_dir, 'app.js'), 'w', encoding='utf-8') as f:
         f.write(js_content)
     
     print(f"HTML app created in: {output_dir}")
@@ -545,6 +616,9 @@ Examples:
   
   # Only generate files without starting server
   python picmap.py /path/to/photos --no-server
+
+  # Skip reverse geocoding (location names)
+  python picmap.py /path/to/photos --no-geocode
         """
     )
     
@@ -571,6 +645,12 @@ Examples:
         action='store_true',
         help='Generate files only, do not start server'
     )
+
+    parser.add_argument(
+        '--no-geocode',
+        action='store_true',
+        help='Skip reverse geocoding for location names'
+    )
     
     args = parser.parse_args()
     
@@ -589,6 +669,10 @@ Examples:
         print("Make sure your photos have EXIF GPS information.")
         sys.exit(1)
     
+    if not args.no_geocode:
+        print("\nLooking up location names (reverse geocoding)...")
+        add_location_data(photos)
+
     # Generate GeoJSON
     geojson = generate_geojson(photos)
     
