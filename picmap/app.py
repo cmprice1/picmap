@@ -10,6 +10,9 @@ import json
 import argparse
 import http.server
 import socketserver
+import hashlib
+import re
+import sqlite3
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Optional, Tuple
@@ -184,6 +187,165 @@ def scan_photos(directory: str) -> List[Dict]:
     return photos
 
 
+def _ensure_thumbnail_table(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS thumbnails (
+            photo_id INTEGER PRIMARY KEY,
+            path TEXT UNIQUE NOT NULL,
+            mtime INTEGER NOT NULL,
+            size INTEGER NOT NULL,
+            thumbnail_path TEXT NULL,
+            stage_thumbnail INTEGER NOT NULL DEFAULT 0,
+            thumbnail_mtime INTEGER NULL
+        )
+        """
+    )
+    columns = {
+        row[1]: row[2]
+        for row in conn.execute("PRAGMA table_info(thumbnails)")
+    }
+    if "thumbnail_path" not in columns:
+        conn.execute("ALTER TABLE thumbnails ADD COLUMN thumbnail_path TEXT NULL")
+    if "stage_thumbnail" not in columns:
+        conn.execute(
+            "ALTER TABLE thumbnails ADD COLUMN stage_thumbnail INTEGER NOT NULL DEFAULT 0"
+        )
+    if "thumbnail_mtime" not in columns:
+        conn.execute("ALTER TABLE thumbnails ADD COLUMN thumbnail_mtime INTEGER NULL")
+    conn.commit()
+
+
+def _sanitize_stem(stem: str) -> str:
+    cleaned = re.sub(r"[^A-Za-z0-9_-]+", "-", stem).strip("-_")
+    return cleaned or "photo"
+
+
+def _build_fallback_thumbnail_name(photo_path: str) -> str:
+    stem = _sanitize_stem(Path(photo_path).stem)
+    digest = hashlib.sha1(photo_path.encode("utf-8")).hexdigest()[:8]
+    return f"{stem}-{digest}.jpg"
+
+
+def generate_thumbnails(photos: List[Dict], output_dir: str) -> None:
+    """
+    Generate thumbnails for photos incrementally and cache progress in SQLite.
+    """
+    thumbnails_dir = os.path.join(output_dir, "thumbnails")
+    os.makedirs(thumbnails_dir, exist_ok=True)
+    db_path = os.path.join(output_dir, "picmap_cache.sqlite")
+
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    _ensure_thumbnail_table(conn)
+
+    for photo in photos:
+        source_path = photo.get("source_path") or photo.get("path")
+        if not source_path:
+            continue
+
+        try:
+            stat = os.stat(source_path)
+        except OSError:
+            continue
+
+        mtime = int(stat.st_mtime)
+        size = stat.st_size
+
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO thumbnails (path, mtime, size)
+            VALUES (?, ?, ?)
+            """,
+            (source_path, mtime, size),
+        )
+
+        row = conn.execute(
+            """
+            SELECT photo_id, mtime, size, thumbnail_path, stage_thumbnail
+            FROM thumbnails
+            WHERE path = ?
+            """,
+            (source_path,),
+        ).fetchone()
+
+        if row is None:
+            continue
+
+        if row["mtime"] != mtime or row["size"] != size:
+            conn.execute(
+                """
+                UPDATE thumbnails
+                SET mtime = ?,
+                    size = ?,
+                    thumbnail_path = NULL,
+                    stage_thumbnail = 0,
+                    thumbnail_mtime = NULL
+                WHERE path = ?
+                """,
+                (mtime, size, source_path),
+            )
+            row = conn.execute(
+                """
+                SELECT photo_id, mtime, size, thumbnail_path, stage_thumbnail
+                FROM thumbnails
+                WHERE path = ?
+                """,
+                (source_path,),
+            ).fetchone()
+            if row is None:
+                continue
+
+        thumbnail_rel_path = row["thumbnail_path"]
+        if row["stage_thumbnail"] == 1 and thumbnail_rel_path:
+            thumbnail_full_path = os.path.join(output_dir, thumbnail_rel_path)
+            if os.path.exists(thumbnail_full_path):
+                photo["thumbnail_path"] = thumbnail_rel_path
+                continue
+
+        if row["photo_id"] is not None:
+            filename = f"{row['photo_id']}.jpg"
+        else:
+            filename = _build_fallback_thumbnail_name(source_path)
+
+        thumbnail_rel_path = os.path.join("thumbnails", filename)
+        thumbnail_full_path = os.path.join(output_dir, thumbnail_rel_path)
+
+        try:
+            with Image.open(source_path) as img:
+                img = ImageOps.exif_transpose(img)
+                img.thumbnail((512, 512))
+                if img.mode in ("RGBA", "LA") or (
+                    img.mode == "P" and "transparency" in img.info
+                ):
+                    img = img.convert("RGB")
+                elif img.mode != "RGB":
+                    img = img.convert("RGB")
+                img.save(thumbnail_full_path, format="JPEG", quality=85)
+        except Exception as exc:
+            print(f"Warning: Could not generate thumbnail for {source_path}: {exc}")
+            continue
+
+        conn.execute(
+            """
+            UPDATE thumbnails
+            SET thumbnail_path = ?,
+                stage_thumbnail = 1,
+                thumbnail_mtime = ?
+            WHERE path = ?
+            """,
+            (
+                thumbnail_rel_path,
+                int(os.path.getmtime(thumbnail_full_path)),
+                source_path,
+            ),
+        )
+        photo["thumbnail_path"] = thumbnail_rel_path
+
+    conn.commit()
+    conn.close()
+
+
 def format_location(address: Dict) -> Optional[str]:
     """
     Format a reverse geocoded address into a human-friendly location name.
@@ -276,6 +438,7 @@ def generate_geojson(photos: List[Dict]) -> Dict:
                 "timestamp": str(photo['timestamp']),
                 "index": i,
                 "path": photo['path'],
+                "thumbnail_path": photo.get('thumbnail_path'),
                 "location": photo.get('location')
             }
         }
@@ -507,9 +670,10 @@ function displayRoute(geojson) {
             // Create popup with photo preview
             const timestamp = new Date(props.timestamp).toLocaleString();
             const location = props.location || 'Unknown location';
+            const imagePath = props.thumbnail_path || props.path;
             const popupContent = `
                 <div class="photo-popup">
-                    <img src="${props.path}" alt="${props.filename}" onerror="this.style.display='none'">
+                    <img src="${imagePath}" alt="${props.filename}" onerror="this.style.display='none'">
                     <h3>${location}</h3>
                     <p>📅 ${timestamp}</p>
                     <p>📍 ${coords[1].toFixed(6)}, ${coords[0].toFixed(6)}</p>
