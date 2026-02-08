@@ -31,7 +31,7 @@ PicMap is a complete local web application for visualizing road trips from photo
 
 ### ✅ One-Command Setup
 ```bash
-pip install -r requirements.txt && python picmap.py /path/to/photos
+pip install -r requirements.txt && python -m picmap /path/to/photos
 ```
 
 ### ✅ Free/Open-Source Libraries
@@ -48,7 +48,7 @@ pip install -r requirements.txt && python picmap.py /path/to/photos
 ### ✅ File Structure
 ```
 picmap/
-├── picmap.py                 # Main application
+├── picmap/                   # Main application package
 ├── requirements.txt          # Dependencies
 ├── README.md                # Documentation
 ├── USAGE_EXAMPLES.md        # Usage guide
@@ -60,7 +60,7 @@ picmap/
 ## Technical Implementation
 
 ### Backend (Python)
-**File**: `picmap.py` (633 lines)
+**File**: `picmap/app.py` (633 lines)
 
 **Key Functions**:
 - `get_decimal_coordinates()`: Converts GPS DMS to decimal

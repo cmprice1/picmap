@@ -637,16 +637,16 @@ def main():
         epilog="""
 Examples:
   # Process photos and start server in one command
-  python picmap.py /path/to/photos
+  python -m picmap /path/to/photos
   
   # Specify output directory and custom port
-  python picmap.py /path/to/photos -o ./my-map -p 8080
+  python -m picmap /path/to/photos -o ./my-map -p 8080
   
   # Only generate files without starting server
-  python picmap.py /path/to/photos --no-server
+  python -m picmap /path/to/photos --no-server
 
   # Skip reverse geocoding (location names)
-  python picmap.py /path/to/photos --no-geocode
+  python -m picmap /path/to/photos --no-geocode
         """
     )
     

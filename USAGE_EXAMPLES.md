@@ -19,10 +19,10 @@ This creates 5 sample photos representing a road trip from San Francisco to Las 
 Process your photos and start the web server:
 ```bash
 # With sample photos
-python picmap.py sample_photos
+python -m picmap sample_photos
 
 # With your own photos
-python picmap.py /path/to/your/photos
+python -m picmap /path/to/your/photos
 ```
 
 The application will:
@@ -36,17 +36,17 @@ The application will:
 
 ### Custom Output Directory
 ```bash
-python picmap.py /path/to/photos -o ./my-trip-map
+python -m picmap /path/to/photos -o ./my-trip-map
 ```
 
 ### Custom Port
 ```bash
-python picmap.py /path/to/photos -p 3000
+python -m picmap /path/to/photos -p 3000
 ```
 
 ### Generate Files Only (No Server)
 ```bash
-python picmap.py /path/to/photos --no-server
+python -m picmap /path/to/photos --no-server
 ```
 
 Then manually start a server:
@@ -126,25 +126,25 @@ Example:
 - Verify photos are accessible from the web server
 
 ### Port Already in Use
-- Change the port: `python picmap.py photos -p 8080`
+- Change the port: `python -m picmap photos -p 8080`
 - Or kill the process using port 8000
 
 ## Examples
 
 ### Example 1: Process Trip Photos
 ```bash
-python picmap.py ~/Pictures/summer-road-trip/
+python -m picmap ~/Pictures/summer-road-trip/
 ```
 
 ### Example 2: Custom Configuration
 ```bash
-python picmap.py ~/Pictures/vacation/ -o ./vacation-map -p 9000
+python -m picmap ~/Pictures/vacation/ -o ./vacation-map -p 9000
 ```
 
 ### Example 3: Generate and Deploy
 ```bash
 # Generate files
-python picmap.py photos/ -o ./dist --no-server
+python -m picmap photos/ -o ./dist --no-server
 
 # Copy to web server
 scp -r ./dist/* user@server:/var/www/mytrip/
