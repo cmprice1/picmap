@@ -5,6 +5,7 @@ Extracts EXIF GPS data from photos and generates an interactive map
 """
 
 import os
+import posixpath
 import sys
 import json
 import argparse
@@ -297,6 +298,19 @@ def generate_thumbnails(photos: List[Dict], output_dir: str) -> None:
                 continue
 
         thumbnail_rel_path = row["thumbnail_path"]
+        if thumbnail_rel_path:
+            normalized_thumbnail_rel_path = thumbnail_rel_path.replace("\\", "/")
+            if normalized_thumbnail_rel_path != thumbnail_rel_path:
+                conn.execute(
+                    """
+                    UPDATE thumbnails
+                    SET thumbnail_path = ?
+                    WHERE path = ?
+                    """,
+                    (normalized_thumbnail_rel_path, source_path),
+                )
+            thumbnail_rel_path = normalized_thumbnail_rel_path
+
         if row["stage_thumbnail"] == 1 and thumbnail_rel_path:
             thumbnail_full_path = os.path.join(output_dir, thumbnail_rel_path)
             if os.path.exists(thumbnail_full_path):
@@ -308,7 +322,7 @@ def generate_thumbnails(photos: List[Dict], output_dir: str) -> None:
         else:
             filename = _build_fallback_thumbnail_name(source_path)
 
-        thumbnail_rel_path = os.path.join("thumbnails", filename)
+        thumbnail_rel_path = posixpath.join("thumbnails", filename)
         thumbnail_full_path = os.path.join(output_dir, thumbnail_rel_path)
 
         try:
