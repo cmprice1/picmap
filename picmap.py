@@ -172,7 +172,6 @@ def scan_photos(directory: str) -> List[Dict]:
                     rel_path = os.path.relpath(photo_path, directory)
                     rel_path = rel_path.replace(os.sep, '/')
                     photo_data["path"] = f"photos/{rel_path}"
-                    photo_data["rel_path"] = rel_path
                     photos.append(photo_data)
                     print(f"  ✓ {file}")
                 else:
@@ -185,83 +184,42 @@ def scan_photos(directory: str) -> List[Dict]:
     return photos
 
 
-def is_landmark_text(value: Optional[str]) -> bool:
-    if not value:
-        return False
-    keywords = (
-        'national park',
-        'national monument',
-        'national memorial',
-        'national recreation',
-        'national preserve',
-        'national historic',
-        'state park',
-        'state monument',
-        'state historic',
-        'state landmark',
-        'state forest',
-        'state recreation',
-        'wilderness',
-        'wildlife refuge',
-        'scenic area',
-        'geographic',
-        'heritage',
-        'monument',
-        'landmark',
-        'park',
-        'preserve'
+def format_location(address: Dict) -> Optional[str]:
+    """
+    Format a reverse geocoded address into a human-friendly location name.
+    """
+    if not address:
+        return None
+
+    primary = (
+        address.get('attraction')
+        or address.get('tourism')
+        or address.get('amenity')
+        or address.get('leisure')
+        or address.get('natural')
+        or address.get('shop')
+        or address.get('road')
+        or address.get('neighbourhood')
+        or address.get('suburb')
+        or address.get('village')
+        or address.get('town')
+        or address.get('city')
+        or address.get('county')
+        or address.get('state')
+        or address.get('country')
     )
-    lowered = value.lower()
-    return any(keyword in lowered for keyword in keywords)
 
-
-def select_location_name(address: Dict, raw: Dict, location_hint: Optional[str]) -> Optional[str]:
-    """
-    Select a human-friendly location name from reverse geocoding data.
-    """
-    if not address and not raw:
-        return location_hint
-
-    name = raw.get('name') if raw else None
-    if name and isinstance(name, str) and is_landmark_text(name):
-        return name
-
-    display_name = raw.get('display_name') if raw else None
-    if display_name and is_landmark_text(display_name):
-        return name or display_name.split(',')[0]
-
-    poi_candidates = []
-    if address:
-        for key in (
-            'national_park',
-            'park',
-            'protected_area',
-            'tourism',
-            'attraction',
-            'amenity',
-            'leisure',
-            'natural',
-            'historic',
-            'boundary'
-        ):
-            value = address.get(key)
-            if value:
-                poi_candidates.append(str(value))
-
-    for candidate in poi_candidates:
-        if is_landmark_text(candidate):
-            return candidate
-
-    city = (
+    secondary = (
         address.get('city')
         or address.get('town')
         or address.get('village')
-    ) if address else None
+        or address.get('state')
+        or address.get('country')
+    )
 
-    if city:
-        return city
-
-    return location_hint or name or address.get('county') if address else None
+    if primary and secondary and primary != secondary:
+        return f"{primary}, {secondary}"
+    return primary or secondary
 
 
 def add_location_data(photos: List[Dict]) -> None:
@@ -283,52 +241,14 @@ def add_location_data(photos: List[Dict]) -> None:
 
         location_name = None
         try:
-            location = reverse(
-                (lat, lon),
-                zoom=18,
-                language='en',
-                addressdetails=True
-            )
+            location = reverse((lat, lon), zoom=10, language='en')
             if location and hasattr(location, 'raw'):
-                raw = location.raw or {}
-                address = raw.get('address', {})
-                location_name = select_location_name(
-                    address,
-                    raw,
-                    photo.get('location_hint')
-                )
+                location_name = format_location(location.raw.get('address', {}))
         except Exception:
             location_name = None
 
         cache[cache_key] = location_name
-        photo['location'] = location_name or photo.get('location_hint')
-
-
-def generate_thumbnails(photos: List[Dict], output_dir: str, max_size: int = 300) -> None:
-    """
-    Generate thumbnails with correct orientation for photo previews.
-    """
-    thumbnails_dir = os.path.join(output_dir, 'thumbnails')
-    os.makedirs(thumbnails_dir, exist_ok=True)
-
-    for photo in photos:
-        rel_path = photo.get('rel_path')
-        source_path = photo.get('source_path')
-        if not rel_path or not source_path:
-            continue
-
-        thumb_rel = str(Path(rel_path).with_suffix('.jpg')).replace(os.sep, '/')
-        thumb_path = os.path.join(thumbnails_dir, thumb_rel)
-        os.makedirs(os.path.dirname(thumb_path), exist_ok=True)
-
-        try:
-            with Image.open(source_path) as img:
-                corrected = ImageOps.exif_transpose(img)
-                corrected.thumbnail((max_size, max_size))
-                corrected.convert('RGB').save(thumb_path, format='JPEG', quality=85)
-            photo['thumbnail'] = f"thumbnails/{thumb_rel}"
-        except Exception:
-            photo['thumbnail'] = None
+        photo['location'] = location_name
 
 
 def generate_geojson(photos: List[Dict]) -> Dict:
@@ -356,8 +276,7 @@ def generate_geojson(photos: List[Dict]) -> Dict:
                 "timestamp": str(photo['timestamp']),
                 "index": i,
                 "path": photo['path'],
-                "location": photo.get('location'),
-                "thumbnail": photo.get('thumbnail')
+                "location": photo.get('location')
             }
         }
         features.append(feature)
@@ -588,10 +507,9 @@ function displayRoute(geojson) {
             // Create popup with photo preview
             const timestamp = new Date(props.timestamp).toLocaleString();
             const location = props.location || 'Unknown location';
-            const imageSrc = props.thumbnail || props.path;
             const popupContent = `
                 <div class="photo-popup">
-                    <img src="${imageSrc}" alt="${props.filename}" onerror="this.style.display='none'">
+                    <img src="${props.path}" alt="${props.filename}" onerror="this.style.display='none'">
                     <h3>${location}</h3>
                     <p>📅 ${timestamp}</p>
                     <p>📍 ${coords[1].toFixed(6)}, ${coords[0].toFixed(6)}</p>
@@ -783,6 +701,9 @@ Examples:
         print("\nLooking up location names (reverse geocoding)...")
         add_location_data(photos)
 
+    # Generate GeoJSON
+    geojson = generate_geojson(photos)
+    
     # Create output directory
     output_dir = args.output
     os.makedirs(output_dir, exist_ok=True)
