@@ -84,6 +84,29 @@ def get_exif_timestamp(exif_dict: Dict) -> Optional[str]:
     return None
 
 
+def get_exif_location_hint(exif_dict: Dict) -> Optional[str]:
+    """
+    Extract a human-friendly location hint from EXIF fields if present.
+    """
+    try:
+        if "0th" in exif_dict:
+            description = exif_dict["0th"].get(piexif.ImageIFD.ImageDescription)
+            if description:
+                if isinstance(description, bytes):
+                    return description.decode('utf-8', errors='ignore').strip()
+                if isinstance(description, str):
+                    return description.strip()
+            xp_title = exif_dict["0th"].get(piexif.ImageIFD.XPTitle)
+            if xp_title:
+                try:
+                    return bytes(xp_title).decode('utf-16le', errors='ignore').strip()
+                except (TypeError, ValueError):
+                    return None
+    except Exception:
+        return None
+    return None
+
+
 def extract_photo_data(photo_path: str) -> Optional[Dict]:
     """
     Extract GPS coordinates, timestamp, and other metadata from a photo.
@@ -116,7 +139,8 @@ def extract_photo_data(photo_path: str) -> Optional[Dict]:
             "path": photo_path,
             "latitude": coordinates[0],
             "longitude": coordinates[1],
-            "timestamp": timestamp or os.path.getmtime(photo_path)
+            "timestamp": timestamp or os.path.getmtime(photo_path),
+            "location_hint": get_exif_location_hint(exif_dict)
         }
     except Exception as e:
         print(f"Warning: Could not process {photo_path}: {e}")
@@ -144,6 +168,9 @@ def scan_photos(directory: str) -> List[Dict]:
                 photo_path = os.path.join(root, file)
                 photo_data = extract_photo_data(photo_path)
                 if photo_data:
+                    rel_path = os.path.relpath(photo_path, directory)
+                    rel_path = rel_path.replace(os.sep, '/')
+                    photo_data["path"] = f"photos/{rel_path}"
                     photos.append(photo_data)
                     print(f"  ✓ {file}")
                 else:
