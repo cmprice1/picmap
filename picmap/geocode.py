@@ -91,8 +91,11 @@ def get_decimal_coordinates(gps_info: Dict) -> Optional[Tuple[float, float]]:
 
 def extract_photo_coordinates(photo_path: str) -> Optional[Tuple[float, float]]:
     """Extract GPS coordinates from a photo's EXIF metadata."""
-    img = Image.open(photo_path)
-    exif_dict = piexif.load(img.info.get('exif', b''))
+    try:
+        img = Image.open(photo_path)
+        exif_dict = piexif.load(img.info.get('exif', b''))
+    except (OSError, ValueError, piexif.InvalidImageDataError):
+        return None
     gps_info = exif_dict.get("GPS", {})
     return get_decimal_coordinates(gps_info)
 
@@ -277,13 +280,53 @@ def process_photo(
     signature = source_signature(path)
     existing = get_photo_record(conn, path)
     if existing and existing[1] == signature:
+        latitude = existing[2]
+        longitude = existing[3]
+        if latitude is None or longitude is None:
+            return {
+                "path": existing[0],
+                "latitude": latitude,
+                "longitude": longitude,
+                "normalized_lat": existing[4],
+                "normalized_lon": existing[5],
+                "location": existing[6],
+            }
+
+        normalized_lat, normalized_lon = normalize_coordinates(latitude, longitude, precision)
+        if (
+            existing[4] == normalized_lat
+            and existing[5] == normalized_lon
+            and existing[6] is not None
+        ):
+            return {
+                "path": existing[0],
+                "latitude": latitude,
+                "longitude": longitude,
+                "normalized_lat": existing[4],
+                "normalized_lon": existing[5],
+                "location": existing[6],
+            }
+
+        location, (normalized_lat, normalized_lon), _ = resolve_location(
+            conn, latitude, longitude, geocode_func, precision
+        )
+        upsert_photo_record(
+            conn,
+            path,
+            signature,
+            latitude,
+            longitude,
+            normalized_lat,
+            normalized_lon,
+            location,
+        )
         return {
             "path": existing[0],
-            "latitude": existing[2],
-            "longitude": existing[3],
-            "normalized_lat": existing[4],
-            "normalized_lon": existing[5],
-            "location": existing[6],
+            "latitude": latitude,
+            "longitude": longitude,
+            "normalized_lat": normalized_lat,
+            "normalized_lon": normalized_lon,
+            "location": location,
         }
 
     coordinates = extract_photo_coordinates(path)
