@@ -183,43 +183,42 @@ def scan_photos(directory: str) -> List[Dict]:
     return photos
 
 
-def select_location_name(address: Dict, raw: Dict, location_hint: Optional[str]) -> Optional[str]:
+def format_location(address: Dict) -> Optional[str]:
     """
-    Select a human-friendly location name from reverse geocoding data.
+    Format a reverse geocoded address into a human-friendly location name.
     """
-    if not address and not raw:
-        return location_hint
+    if not address:
+        return None
 
-    name = raw.get('name') if raw else None
-    if name and isinstance(name, str) and 'national park' in name.lower():
-        return name
-
-    tourism = address.get('tourism') if address else None
-    if tourism and 'national park' in str(tourism).lower():
-        return tourism
-
-    poi = (
+    primary = (
         address.get('attraction')
         or address.get('tourism')
         or address.get('amenity')
         or address.get('leisure')
         or address.get('natural')
-        or address.get('park')
-    ) if address else None
+        or address.get('shop')
+        or address.get('road')
+        or address.get('neighbourhood')
+        or address.get('suburb')
+        or address.get('village')
+        or address.get('town')
+        or address.get('city')
+        or address.get('county')
+        or address.get('state')
+        or address.get('country')
+    )
 
-    if poi and isinstance(poi, str):
-        return poi
-
-    city = (
+    secondary = (
         address.get('city')
         or address.get('town')
         or address.get('village')
-    ) if address else None
+        or address.get('state')
+        or address.get('country')
+    )
 
-    if city:
-        return city
-
-    return location_hint or name or address.get('county') if address else None
+    if primary and secondary and primary != secondary:
+        return f"{primary}, {secondary}"
+    return primary or secondary
 
 
 def add_location_data(photos: List[Dict]) -> None:
@@ -241,25 +240,14 @@ def add_location_data(photos: List[Dict]) -> None:
 
         location_name = None
         try:
-            location = reverse(
-                (lat, lon),
-                zoom=18,
-                language='en',
-                addressdetails=True
-            )
+            location = reverse((lat, lon), zoom=10, language='en')
             if location and hasattr(location, 'raw'):
-                raw = location.raw or {}
-                address = raw.get('address', {})
-                location_name = select_location_name(
-                    address,
-                    raw,
-                    photo.get('location_hint')
-                )
+                location_name = format_location(location.raw.get('address', {}))
         except Exception:
             location_name = None
 
         cache[cache_key] = location_name
-        photo['location'] = location_name or photo.get('location_hint')
+        photo['location'] = location_name
 
 
 def generate_geojson(photos: List[Dict]) -> Dict:
