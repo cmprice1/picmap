@@ -23,6 +23,11 @@ test_output/
 demo_output/
 security_test/
 *.log
+*.sqlite
+picmap_cache.sqlite
+locations.csv
+extracted/
+converted/
 
 # Sample/test data
 sample_photos/
