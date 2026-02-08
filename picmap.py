@@ -15,8 +15,10 @@ from datetime import datetime
 from typing import List, Dict, Optional, Tuple
 
 try:
-    from PIL import Image
+    from PIL import Image, ImageOps
     import piexif
+    from geopy.geocoders import Nominatim
+    from geopy.extra.rate_limiter import RateLimiter
 except ImportError:
     print("Error: Required packages not installed. Run: pip install -r requirements.txt")
     sys.exit(1)
@@ -82,6 +84,29 @@ def get_exif_timestamp(exif_dict: Dict) -> Optional[str]:
     return None
 
 
+def get_exif_location_hint(exif_dict: Dict) -> Optional[str]:
+    """
+    Extract a human-friendly location hint from EXIF fields if present.
+    """
+    try:
+        if "0th" in exif_dict:
+            description = exif_dict["0th"].get(piexif.ImageIFD.ImageDescription)
+            if description:
+                if isinstance(description, bytes):
+                    return description.decode('utf-8', errors='ignore').strip()
+                if isinstance(description, str):
+                    return description.strip()
+            xp_title = exif_dict["0th"].get(piexif.ImageIFD.XPTitle)
+            if xp_title:
+                try:
+                    return bytes(xp_title).decode('utf-16le', errors='ignore').strip()
+                except (TypeError, ValueError):
+                    return None
+    except Exception:
+        return None
+    return None
+
+
 def extract_photo_data(photo_path: str) -> Optional[Dict]:
     """
     Extract GPS coordinates, timestamp, and other metadata from a photo.
@@ -112,9 +137,11 @@ def extract_photo_data(photo_path: str) -> Optional[Dict]:
         return {
             "filename": filename,
             "path": photo_path,
+            "source_path": photo_path,
             "latitude": coordinates[0],
             "longitude": coordinates[1],
-            "timestamp": timestamp or os.path.getmtime(photo_path)
+            "timestamp": timestamp or os.path.getmtime(photo_path),
+            "location_hint": get_exif_location_hint(exif_dict)
         }
     except Exception as e:
         print(f"Warning: Could not process {photo_path}: {e}")
@@ -142,6 +169,10 @@ def scan_photos(directory: str) -> List[Dict]:
                 photo_path = os.path.join(root, file)
                 photo_data = extract_photo_data(photo_path)
                 if photo_data:
+                    rel_path = os.path.relpath(photo_path, directory)
+                    rel_path = rel_path.replace(os.sep, '/')
+                    photo_data["path"] = f"photos/{rel_path}"
+                    photo_data["rel_path"] = rel_path
                     photos.append(photo_data)
                     print(f"  ✓ {file}")
                 else:
@@ -152,6 +183,152 @@ def scan_photos(directory: str) -> List[Dict]:
     
     print(f"\nFound {len(photos)} photos with GPS data")
     return photos
+
+
+def is_landmark_text(value: Optional[str]) -> bool:
+    if not value:
+        return False
+    keywords = (
+        'national park',
+        'national monument',
+        'national memorial',
+        'national recreation',
+        'national preserve',
+        'national historic',
+        'state park',
+        'state monument',
+        'state historic',
+        'state landmark',
+        'state forest',
+        'state recreation',
+        'wilderness',
+        'wildlife refuge',
+        'scenic area',
+        'geographic',
+        'heritage',
+        'monument',
+        'landmark',
+        'park',
+        'preserve'
+    )
+    lowered = value.lower()
+    return any(keyword in lowered for keyword in keywords)
+
+
+def select_location_name(address: Dict, raw: Dict, location_hint: Optional[str]) -> Optional[str]:
+    """
+    Select a human-friendly location name from reverse geocoding data.
+    """
+    if not address and not raw:
+        return location_hint
+
+    name = raw.get('name') if raw else None
+    if name and isinstance(name, str) and is_landmark_text(name):
+        return name
+
+    display_name = raw.get('display_name') if raw else None
+    if display_name and is_landmark_text(display_name):
+        return name or display_name.split(',')[0]
+
+    poi_candidates = []
+    if address:
+        for key in (
+            'national_park',
+            'park',
+            'protected_area',
+            'tourism',
+            'attraction',
+            'amenity',
+            'leisure',
+            'natural',
+            'historic',
+            'boundary'
+        ):
+            value = address.get(key)
+            if value:
+                poi_candidates.append(str(value))
+
+    for candidate in poi_candidates:
+        if is_landmark_text(candidate):
+            return candidate
+
+    city = (
+        address.get('city')
+        or address.get('town')
+        or address.get('village')
+    ) if address else None
+
+    if city:
+        return city
+
+    return location_hint or name or address.get('county') if address else None
+
+
+def add_location_data(photos: List[Dict]) -> None:
+    """
+    Enrich photo metadata with location names via reverse geocoding.
+    """
+    geolocator = Nominatim(user_agent="picmap")
+    reverse = RateLimiter(geolocator.reverse, min_delay_seconds=1)
+    cache: Dict[Tuple[float, float], Optional[str]] = {}
+
+    for photo in photos:
+        lat = photo['latitude']
+        lon = photo['longitude']
+        cache_key = (round(lat, 5), round(lon, 5))
+
+        if cache_key in cache:
+            photo['location'] = cache[cache_key]
+            continue
+
+        location_name = None
+        try:
+            location = reverse(
+                (lat, lon),
+                zoom=18,
+                language='en',
+                addressdetails=True
+            )
+            if location and hasattr(location, 'raw'):
+                raw = location.raw or {}
+                address = raw.get('address', {})
+                location_name = select_location_name(
+                    address,
+                    raw,
+                    photo.get('location_hint')
+                )
+        except Exception:
+            location_name = None
+
+        cache[cache_key] = location_name
+        photo['location'] = location_name or photo.get('location_hint')
+
+
+def generate_thumbnails(photos: List[Dict], output_dir: str, max_size: int = 300) -> None:
+    """
+    Generate thumbnails with correct orientation for photo previews.
+    """
+    thumbnails_dir = os.path.join(output_dir, 'thumbnails')
+    os.makedirs(thumbnails_dir, exist_ok=True)
+
+    for photo in photos:
+        rel_path = photo.get('rel_path')
+        source_path = photo.get('source_path')
+        if not rel_path or not source_path:
+            continue
+
+        thumb_rel = str(Path(rel_path).with_suffix('.jpg')).replace(os.sep, '/')
+        thumb_path = os.path.join(thumbnails_dir, thumb_rel)
+        os.makedirs(os.path.dirname(thumb_path), exist_ok=True)
+
+        try:
+            with Image.open(source_path) as img:
+                corrected = ImageOps.exif_transpose(img)
+                corrected.thumbnail((max_size, max_size))
+                corrected.convert('RGB').save(thumb_path, format='JPEG', quality=85)
+            photo['thumbnail'] = f"thumbnails/{thumb_rel}"
+        except Exception:
+            photo['thumbnail'] = None
 
 
 def generate_geojson(photos: List[Dict]) -> Dict:
@@ -178,7 +355,9 @@ def generate_geojson(photos: List[Dict]) -> Dict:
                 "filename": photo['filename'],
                 "timestamp": str(photo['timestamp']),
                 "index": i,
-                "path": photo['path']
+                "path": photo['path'],
+                "location": photo.get('location'),
+                "thumbnail": photo.get('thumbnail')
             }
         }
         features.append(feature)
@@ -207,7 +386,7 @@ def generate_geojson(photos: List[Dict]) -> Dict:
 
 def save_geojson(geojson: Dict, output_path: str):
     """Save GeoJSON to file."""
-    with open(output_path, 'w') as f:
+    with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(geojson, f, indent=2)
     print(f"\nGeoJSON saved to: {output_path}")
 
@@ -408,10 +587,12 @@ function displayRoute(geojson) {
             
             // Create popup with photo preview
             const timestamp = new Date(props.timestamp).toLocaleString();
+            const location = props.location || 'Unknown location';
+            const imageSrc = props.thumbnail || props.path;
             const popupContent = `
                 <div class="photo-popup">
-                    <img src="${props.path}" alt="${props.filename}" onerror="this.style.display='none'">
-                    <h3>${props.filename}</h3>
+                    <img src="${imageSrc}" alt="${props.filename}" onerror="this.style.display='none'">
+                    <h3>${location}</h3>
                     <p>📅 ${timestamp}</p>
                     <p>📍 ${coords[1].toFixed(6)}, ${coords[0].toFixed(6)}</p>
                 </div>
@@ -496,10 +677,10 @@ document.addEventListener('DOMContentLoaded', initMap);
     # Save files
     os.makedirs(output_dir, exist_ok=True)
     
-    with open(os.path.join(output_dir, 'index.html'), 'w') as f:
+    with open(os.path.join(output_dir, 'index.html'), 'w', encoding='utf-8') as f:
         f.write(html_content)
     
-    with open(os.path.join(output_dir, 'app.js'), 'w') as f:
+    with open(os.path.join(output_dir, 'app.js'), 'w', encoding='utf-8') as f:
         f.write(js_content)
     
     print(f"HTML app created in: {output_dir}")
@@ -545,6 +726,9 @@ Examples:
   
   # Only generate files without starting server
   python picmap.py /path/to/photos --no-server
+
+  # Skip reverse geocoding (location names)
+  python picmap.py /path/to/photos --no-geocode
         """
     )
     
@@ -571,6 +755,12 @@ Examples:
         action='store_true',
         help='Generate files only, do not start server'
     )
+
+    parser.add_argument(
+        '--no-geocode',
+        action='store_true',
+        help='Skip reverse geocoding for location names'
+    )
     
     args = parser.parse_args()
     
@@ -589,17 +779,23 @@ Examples:
         print("Make sure your photos have EXIF GPS information.")
         sys.exit(1)
     
-    # Generate GeoJSON
-    geojson = generate_geojson(photos)
-    
+    if not args.no_geocode:
+        print("\nLooking up location names (reverse geocoding)...")
+        add_location_data(photos)
+
     # Create output directory
     output_dir = args.output
     os.makedirs(output_dir, exist_ok=True)
-    
+
+    generate_thumbnails(photos, output_dir)
+
+    # Generate GeoJSON
+    geojson = generate_geojson(photos)
+
     # Save GeoJSON
     geojson_path = os.path.join(output_dir, 'route.geojson')
     save_geojson(geojson, geojson_path)
-    
+
     # Create HTML app
     create_html_app(output_dir, args.photos_dir)
     
