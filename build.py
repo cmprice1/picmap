@@ -146,6 +146,60 @@ def find_media_with_sidecars(takeout_dir):
     return results
 
 
+def find_media_in_album(album_dir):
+    """
+    Scan a single album folder (e.g., 'Google Photos/Album Name') for media + sidecars.
+    Much faster than scanning entire Takeout since it's just one folder.
+
+    Returns a list of dicts: {image_path, sidecar_path}
+    """
+    root = Path(album_dir)
+
+    if not root.exists():
+        raise FileNotFoundError(f"Album folder not found: {album_dir}")
+
+    # Collect media and JSON files in this folder
+    media_files = {}
+    json_files = {}
+
+    print(f"  Scanning album: {root.name}")
+    for fpath in root.iterdir():
+        if not fpath.is_file():
+            continue
+
+        name_lower = fpath.name.lower()
+        if fpath.suffix.lower() in MEDIA_EXTS:
+            media_files[fpath.name] = fpath
+        elif name_lower.endswith(".json"):
+            json_files[fpath.name] = fpath
+
+    print(f"  Found {len(media_files)} media, {len(json_files)} sidecars")
+
+    # Match in memory
+    results = []
+    for media_name, media_path in media_files.items():
+        stem = Path(media_name).stem
+
+        # Try candidates in priority order
+        candidates = [
+            media_name + ".json",
+            media_name + ".supplemental-metadata.json",
+            stem + ".json",
+            stem + ".supplemental-metadata.json",
+        ]
+
+        sidecar = None
+        for c in candidates:
+            if c in json_files:
+                sidecar = json_files[c]
+                break
+
+        if sidecar:
+            results.append({"image_path": media_path, "sidecar_path": sidecar})
+
+    return results
+
+
 # ---------------------------------------------------------------------------
 # Sidecar parsing
 # ---------------------------------------------------------------------------
@@ -511,6 +565,9 @@ def main():
     parser = argparse.ArgumentParser(description="Ingest Google Takeout export into roadtrip-map data.")
     parser.add_argument("--takeout", default="/content/drive/My Drive/PicMap-V2 Project/Takeout",
                         help="Path to Takeout export folder (default: Colab Drive location)")
+    parser.add_argument("--album", default=None,
+                        help="Path to specific album folder (faster than full Takeout scan). "
+                             "Example: /content/drive/My Drive/PicMap-V2 Project/Takeout/Google Photos/Album Name")
     parser.add_argument("--output", default="./output", help="Output folder (default: ./output)")
     parser.add_argument("--config", default="config.json", help="Config file (default: config.json)")
     parser.add_argument("--url-map", dest="url_map", default=None,
@@ -531,15 +588,20 @@ def main():
             url_map = json.load(f)
         print(f"Drive mode: loaded URL map with {len(url_map)} photo URLs")
 
-    print(f"\nScanning: {args.takeout}")
-    if url_map:
+    print(f"\nScanning media...")
+    if args.album:
+        # Album mode: scan specific folder only (fast)
+        media_files = find_media_in_album(args.album)
+    elif url_map:
         # Drive mode: only sidecars downloaded locally; images served from cloud
         media_files = find_sidecars_only(args.takeout, url_map)
         print(f"Found {len(media_files)} sidecar files matched to Drive URLs")
     else:
-        # Local mode: full media + sidecar pairs
+        # Full Takeout mode: recursive scan
+        print(f"Takeout: {args.takeout}")
         media_files = find_media_with_sidecars(args.takeout)
-        print(f"Found {len(media_files)} media files with sidecars")
+
+    print(f"Found {len(media_files)} media files with sidecars")
 
     # Parse all sidecars (threaded for Drive I/O performance)
     print(f"\nParsing {len(media_files)} sidecars...")
