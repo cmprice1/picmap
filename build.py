@@ -604,7 +604,7 @@ def main():
     print(f"Found {len(media_files)} media files with sidecars")
 
     # Parse all sidecars (threaded for Drive I/O performance)
-    print(f"\nParsing {len(media_files)} sidecars...")
+    print(f"\nParsing {len(media_files)} sidecars (16 threads)...")
     photos = []
     image_map = {} if not image_map else image_map
 
@@ -612,12 +612,20 @@ def main():
         return mf, parse_sidecar(mf["sidecar_path"])
 
     done = 0
+    start_time = time.time()
     with ThreadPoolExecutor(max_workers=16) as pool:
+        print(f"  ThreadPool started, submitting {len(media_files)} tasks...")
         futures = {pool.submit(_parse_one, mf): mf for mf in media_files}
+        print(f"  All tasks submitted, waiting for results...")
+
         for future in as_completed(futures):
             done += 1
-            if done % 500 == 0 or done == len(media_files):
-                print(f"  ...parsed {done}/{len(media_files)} sidecars")
+            if done % 10 == 0 or done == len(media_files):
+                elapsed = time.time() - start_time
+                rate = done / elapsed if elapsed > 0 else 0
+                eta = (len(media_files) - done) / rate if rate > 0 else 0
+                print(f"  ...parsed {done}/{len(media_files)} ({rate:.1f}/sec, ETA {eta:.0f}s)")
+
             mf, parsed = future.result()
             if parsed and parsed["timestamp"]:
                 parsed["_image_path"] = mf["image_path"]
