@@ -76,43 +76,71 @@ def find_media_with_sidecars(takeout_dir):
     Walk a (possibly merged) Takeout export folder and collect every media
     file that has a matching .json sidecar.
 
-    Google Takeout names sidecars as:
-        photo.jpg  →  photo.jpg.json           (most common)
-        photo.jpg  →  photo.json               (older exports)
-        long_name… →  long_name….json          (truncated at 46 chars)
+    Single-pass scan: walks all files once, then matches in memory.
+    Handles sidecar naming variants:
+        photo.jpg  →  photo.jpg.json
+        photo.jpg  →  photo.jpg.supplemental-metadata.json
+        photo.jpg  →  photo.json
+        long_name… →  long_name….json  (truncated at 46 chars)
 
     Returns a list of dicts: {image_path, sidecar_path}
     """
-    results = []
     root = Path(takeout_dir)
 
-    for media_path in root.rglob("*"):
-        if media_path.suffix.lower() not in MEDIA_EXTS:
+    # Single pass: collect all files, split into media and json
+    media_by_dir = {}   # dir -> {filename: path}
+    json_by_dir = {}    # dir -> {filename: path}
+
+    print("  Scanning files (single pass)...")
+    file_count = 0
+    for fpath in root.rglob("*"):
+        if not fpath.is_file():
             continue
+        file_count += 1
+        if file_count % 500 == 0:
+            print(f"    ...scanned {file_count} files")
 
-        # Candidate sidecar paths
-        candidates = [
-            media_path.parent / (media_path.name + ".json"),
-            media_path.parent / (media_path.stem + ".json"),
-            # Handle Google's 46-char truncation: try prefix match
-        ]
+        d = str(fpath.parent)
+        name_lower = fpath.name.lower()
 
-        sidecar = None
-        for c in candidates:
-            if c.exists():
-                sidecar = c
-                break
+        if fpath.suffix.lower() in MEDIA_EXTS:
+            media_by_dir.setdefault(d, {})[fpath.name] = fpath
+        elif name_lower.endswith(".json"):
+            json_by_dir.setdefault(d, {})[fpath.name] = fpath
 
-        # Prefix-match fallback for truncated names
-        if sidecar is None:
-            prefix = media_path.name[:45]
-            for p in media_path.parent.glob("*.json"):
-                if p.name.startswith(prefix):
-                    sidecar = p
+    print(f"  Scan complete: {file_count} files")
+
+    # Match in memory
+    results = []
+    for d, media_files in media_by_dir.items():
+        jsons = json_by_dir.get(d, {})
+        for media_name, media_path in media_files.items():
+            stem = Path(media_name).stem  # IMG_0760
+
+            # Try candidates in priority order
+            candidates = [
+                media_name + ".json",                              # IMG_0760.JPG.json
+                media_name + ".supplemental-metadata.json",        # IMG_0760.JPG.supplemental-metadata.json
+                stem + ".json",                                    # IMG_0760.json
+                stem + ".supplemental-metadata.json",              # IMG_0760.supplemental-metadata.json
+            ]
+
+            sidecar = None
+            for c in candidates:
+                if c in jsons:
+                    sidecar = jsons[c]
                     break
 
-        if sidecar:
-            results.append({"image_path": media_path, "sidecar_path": sidecar})
+            # Prefix-match fallback for truncated names
+            if sidecar is None:
+                prefix = media_name[:45]
+                for jname, jpath in jsons.items():
+                    if jname.startswith(prefix):
+                        sidecar = jpath
+                        break
+
+            if sidecar:
+                results.append({"image_path": media_path, "sidecar_path": sidecar})
 
     return results
 
