@@ -406,10 +406,15 @@ def build_output(clusters, all_photos, output_dir, config, image_map=None, url_m
 
         rep = select_representative_photo(cluster)
 
-        # Build photo list — Drive mode uses cloud URLs; local mode copies files
+        # Build photo list — only copy max_photos_downloaded_per_stop to output/
+        # All photos included in data.json for reference, but only sample copied locally
         stop_photos = []
+        photos_to_copy = cluster[:config.get("max_photos_downloaded_per_stop", 6)]
+
         for p in cluster[:config["max_photos_displayed_per_stop"]]:
             fname = p["filename"]
+            should_copy = p in photos_to_copy  # Only copy selected photos
+
             if url_map and fname in url_map:
                 # Drive mode: photo lives in the cloud
                 stop_photos.append({
@@ -420,14 +425,15 @@ def build_output(clusters, all_photos, output_dir, config, image_map=None, url_m
                     "caption":   p["description"] or p["title"] or "",
                 })
             elif image_map:
-                # Local mode: copy photo to output/photos/
+                # Local mode: only copy selected photos to output/photos/
                 src = image_map.get(fname)
                 if src:
-                    dest = photos_dir / src.name
-                    shutil.copy2(src, dest)
-                    total_photos_copied += 1
-                    if total_photos_copied % 20 == 0:
-                        print(f"    ...copied {total_photos_copied} photos")
+                    if should_copy:
+                        dest = photos_dir / src.name
+                        shutil.copy2(src, dest)
+                        total_photos_copied += 1
+                        if total_photos_copied % 20 == 0:
+                            print(f"    ...copied {total_photos_copied} photos")
                     stop_photos.append({
                         "id":        fname,
                         "filename":  src.name,

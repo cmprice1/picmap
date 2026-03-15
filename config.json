@@ -5,6 +5,7 @@
   "cluster_time_gap_hours": 3,
   "min_photos_per_stop": 1,
   "max_photos_displayed_per_stop": 12,
+  "max_photos_downloaded_per_stop": 6,
   "geocode_rate_limit_seconds": 1.1,
   "trip_name": "Southwest Odyssey",
   "trip_subtitle": "Utah · Nevada · Arizona · 2025"
