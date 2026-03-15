@@ -18,7 +18,13 @@ build/
 *.swo
 
 # Generated files
-output/
+# Allow metadata JSON but ignore photos and temp folders
+output/photos/
+output/*.JPG
+output/*.jpg
+output/*.HEIC
+output/*.mov
+output/*.mp4
 test_output/
 demo_output/
 security_test/
