@@ -15,6 +15,7 @@ import math
 import os
 import shutil
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -388,8 +389,11 @@ def build_output(clusters, all_photos, output_dir, config, image_map=None, url_m
     stops = []
     waypoints = []
     stop_order = 0
+    total_photos_copied = 0
 
-    for cluster in clusters:
+    for ci, cluster in enumerate(clusters):
+        if (ci + 1) % 20 == 0:
+            print(f"  Processing cluster {ci + 1}/{len(clusters)}...")
         stop_type = classify_stop(cluster, config)
         clat, clon = centroid(cluster)
         if clat is None:
@@ -421,6 +425,9 @@ def build_output(clusters, all_photos, output_dir, config, image_map=None, url_m
                 if src:
                     dest = photos_dir / src.name
                     shutil.copy2(src, dest)
+                    total_photos_copied += 1
+                    if total_photos_copied % 20 == 0:
+                        print(f"    ...copied {total_photos_copied} photos")
                     stop_photos.append({
                         "id":        fname,
                         "filename":  src.name,
@@ -528,15 +535,27 @@ def main():
         media_files = find_media_with_sidecars(args.takeout)
         print(f"Found {len(media_files)} media files with sidecars")
 
-    # Parse all sidecars
+    # Parse all sidecars (threaded for Drive I/O performance)
+    print(f"\nParsing {len(media_files)} sidecars...")
     photos = []
-    for mf in media_files:
-        parsed = parse_sidecar(mf["sidecar_path"])
-        if parsed and parsed["timestamp"]:
-            parsed["_image_path"] = mf["image_path"]
-            photos.append(parsed)
-            if mf["image_path"]:
-                image_map[parsed["filename"]] = mf["image_path"]
+    image_map = {} if not image_map else image_map
+
+    def _parse_one(mf):
+        return mf, parse_sidecar(mf["sidecar_path"])
+
+    done = 0
+    with ThreadPoolExecutor(max_workers=16) as pool:
+        futures = {pool.submit(_parse_one, mf): mf for mf in media_files}
+        for future in as_completed(futures):
+            done += 1
+            if done % 500 == 0 or done == len(media_files):
+                print(f"  ...parsed {done}/{len(media_files)} sidecars")
+            mf, parsed = future.result()
+            if parsed and parsed["timestamp"]:
+                parsed["_image_path"] = mf["image_path"]
+                photos.append(parsed)
+                if mf["image_path"]:
+                    image_map[parsed["filename"]] = mf["image_path"]
 
     print(f"Parsed {len(photos)} photos with timestamps")
 
