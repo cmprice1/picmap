@@ -1,0 +1,11 @@
+{
+  "overnight_threshold_hours": 4,
+  "day_stop_threshold_minutes": 30,
+  "cluster_radius_km": 2.5,
+  "cluster_time_gap_hours": 3,
+  "min_photos_per_stop": 1,
+  "max_photos_displayed_per_stop": 12,
+  "geocode_rate_limit_seconds": 1.1,
+  "trip_name": "Southwest Odyssey",
+  "trip_subtitle": "Utah · Nevada · Arizona · 2025"
+}

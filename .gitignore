@@ -35,3 +35,11 @@ sample_photos/
 # OS
 .DS_Store
 Thumbs.db
+
+# Secrets / OAuth tokens
+credentials.json
+token.json
+drive_token.json
+
+# Claude Code
+.claude/
