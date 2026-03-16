@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Southwest Odyssey · 2025</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pinyon+Script&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<style>
+/* ── Reset & Root ─────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --accent:        #E07B54;
+  --accent-glow:   rgba(224,123,84,0.35);
+  --gold:          #F4C842;
+  --text:          #F5F0E8;
+  --text-muted:    rgba(245,240,232,0.55);
+  --card:          rgba(10,12,18,0.88);
+  --card-border:   rgba(255,255,255,0.10);
+  --radius:        14px;
+  --ease:          cubic-bezier(0.4,0,0.2,1);
+}
+html, body { width:100%; height:100%; overflow:hidden; background:#080a0f; font-family:'DM Sans',system-ui,sans-serif; color:var(--text); }
+
+/* ── Landing ──────────────────────────────────────────────────────────── */
+#landing {
+  position:fixed; inset:0; z-index:900;
+  background:#050708;
+  transition: opacity 1.4s var(--ease);
+}
+#landing.fade-out { opacity:0; pointer-events:none; }
+
+.hero-bg {
+  position:absolute; inset:-8%;
+  background-size:cover; background-position:center;
+  opacity:0; transition:opacity 2s ease;
+  will-change:transform,opacity;
+}
+.hero-bg.active  { opacity:1; animation:kenBurns 12s ease-out forwards; }
+.hero-bg.exiting { opacity:0; }
+
+@keyframes kenBurns {
+  from { transform:scale(1.08) translate(0,0); }
+  to   { transform:scale(1.00) translate(-1.5%,-0.8%); }
+}
+@keyframes kenBurns2 {
+  from { transform:scale(1.06) translate(-1%,0); }
+  to   { transform:scale(1.01) translate(1%,-0.5%); }
+}
+@keyframes kenBurns3 {
+  from { transform:scale(1.00) translate(0.5%,0.3%); }
+  to   { transform:scale(1.07) translate(-0.8%,-0.4%); }
+}
+.hero-bg.active.kb2 { animation-name:kenBurns2; }
+.hero-bg.active.kb3 { animation-name:kenBurns3; }
+
+.landing-vignette {
+  position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(ellipse 140% 100% at 50% 50%,
+    transparent 35%, rgba(5,7,8,0.65) 100%);
+}
+.landing-gradient {
+  position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(
+    to bottom,
+    rgba(5,7,8,0.35) 0%,
+    transparent 35%,
+    transparent 55%,
+    rgba(5,7,8,0.80) 100%
+  );
+}
+
+#landing-content {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  text-align:center; padding:2rem;
+}
+#trip-title {
+  font-family:'Pinyon Script',cursive;
+  font-size:clamp(3.5rem,9vw,8rem);
+  line-height:1.1;
+  color:#fff;
+  text-shadow:0 2px 60px rgba(0,0,0,0.9), 0 0 80px var(--accent-glow);
+  opacity:0; transform:translateY(16px);
+  transition:opacity 1.4s ease, transform 1.4s ease;
+}
+#trip-title.visible { opacity:1; transform:translateY(0); }
+
+#trip-subtitle {
+  font-size:clamp(0.75rem,2vw,1rem);
+  font-weight:300; letter-spacing:0.35em;
+  text-transform:uppercase;
+  color:rgba(245,240,232,0.70);
+  margin-top:0.7rem;
+  opacity:0; transform:translateY(10px);
+  transition:opacity 1.2s ease 0.3s, transform 1.2s ease 0.3s;
+}
+#trip-subtitle.visible { opacity:1; transform:translateY(0); }
+
+.landing-dots {
+  display:flex; gap:8px; margin-top:2.5rem;
+  opacity:0; transition:opacity 0.8s ease;
+}
+.landing-dots.visible { opacity:1; }
+.dot {
+  width:7px; height:7px; border-radius:50%;
+  background:rgba(255,255,255,0.25); transition:background 0.4s;
+}
+.dot.active { background:var(--accent); }
+
+#skip-btn {
+  position:absolute; top:1.5rem; right:1.8rem;
+  background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
+  color:rgba(245,240,232,0.75); font-family:'DM Sans',sans-serif;
+  font-size:0.82rem; font-weight:400; letter-spacing:0.08em;
+  padding:0.5rem 1.1rem; border-radius:20px;
+  cursor:pointer; opacity:0; transition:opacity 0.6s ease, background 0.2s;
+  backdrop-filter:blur(8px);
+}
+#skip-btn.visible { opacity:1; }
+#skip-btn:hover   { background:rgba(255,255,255,0.15); color:#fff; }
+
+/* ── Map ──────────────────────────────────────────────────────────────── */
+#map { position:fixed; inset:0; z-index:1; background:#f0e8d2; }
+.mapboxgl-canvas { filter: sepia(0.22) saturate(0.72) contrast(0.87) brightness(1.06) hue-rotate(2deg); }
+
+/* Marker styles — pushpin */
+.marker-wrap {
+  cursor:pointer;
+  line-height:0;
+  display:none;  /* hidden by default, shown by updateMarkerVisibility */
+}
+.marker-wrap:hover { filter:drop-shadow(0 2px 6px rgba(0,0,0,0.45)); z-index:10 !important; }
+.marker-wrap:hover .pushpin-svg { transform:scale(1.3); transform-origin:bottom center; }
+.marker-wrap.play-active .pushpin-svg { transform:scale(1.4); transform-origin:bottom center; }
+.pushpin-svg { transition:transform 0.15s ease; }
+
+/* ── UI Overlay ───────────────────────────────────────────────────────── */
+#ui-overlay {
+  position:fixed; z-index:50;
+  top:1.4rem; left:50%; transform:translateX(-50%);
+  display:flex; gap:0.6rem; align-items:center;
+}
+.map-btn {
+  background:var(--card); border:1px solid var(--card-border);
+  color:var(--text); font-family:'DM Sans',sans-serif;
+  font-size:0.85rem; font-weight:500; letter-spacing:0.04em;
+  padding:0.55rem 1.2rem; border-radius:24px;
+  cursor:pointer; backdrop-filter:blur(12px);
+  transition:background 0.2s, border-color 0.2s, transform 0.15s;
+  white-space:nowrap;
+}
+.map-btn:hover { background:rgba(20,25,35,0.95); border-color:rgba(255,255,255,0.22); }
+.map-btn:active{ transform:scale(0.97); }
+.map-btn.accent { background:var(--accent); border-color:var(--accent); color:#fff; }
+.map-btn.accent:hover { background:#cc6a42; }
+
+#token-warning {
+  display:none; position:fixed; z-index:200;
+  inset:0; align-items:center; justify-content:center;
+  background:rgba(5,7,8,0.92); flex-direction:column; gap:1rem; padding:2rem; text-align:center;
+}
+#token-warning.show { display:flex; }
+#token-warning h2 { font-size:1.4rem; color:var(--accent); }
+#token-warning p  { color:var(--text-muted); max-width:480px; line-height:1.6; }
+#token-warning code { background:rgba(255,255,255,0.08); padding:0.2em 0.5em; border-radius:4px; font-size:0.9rem; }
+
+/* ── Stop Info Panel (Play Trip) ──────────────────────────────────────── */
+#stop-panel {
+  position:fixed; z-index:60;
+  bottom:0; left:0; right:0;
+  background:var(--card);
+  border-top:1px solid var(--card-border);
+  backdrop-filter:blur(16px);
+  padding:1.1rem 1.5rem 1.3rem;
+  transform:translateY(100%);
+  transition:transform 0.45s var(--ease);
+  display:flex; align-items:center; gap:1.4rem;
+}
+#stop-panel.visible { transform:translateY(0); }
+
+.stop-panel-badge {
+  font-size:0.65rem; font-weight:500; letter-spacing:0.12em;
+  text-transform:uppercase; padding:0.25em 0.7em; border-radius:12px;
+  white-space:nowrap;
+}
+.badge-overnight { background:rgba(224,123,84,0.2); color:var(--accent); border:1px solid var(--accent-glow); }
+.badge-day       { background:rgba(244,200,66,0.18); color:var(--gold); border:1px solid rgba(244,200,66,0.35); }
+
+#stop-panel-info { flex:1; min-width:0; }
+#stop-panel-name { font-size:1.1rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#stop-panel-date { font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem; }
+
+.stop-panel-nav { display:flex; align-items:center; gap:0.5rem; flex-shrink:0; }
+.nav-btn {
+  width:34px; height:34px; border-radius:50%;
+  background:rgba(255,255,255,0.07); border:1px solid var(--card-border);
+  color:var(--text); font-size:1.1rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background 0.2s;
+}
+.nav-btn:hover { background:rgba(255,255,255,0.14); }
+.nav-btn:disabled { opacity:0.3; cursor:default; }
+#stop-panel-counter { font-size:0.8rem; color:var(--text-muted); min-width:50px; text-align:center; }
+.close-btn {
+  width:32px; height:32px; border-radius:50%;
+  background:rgba(255,255,255,0.06); border:1px solid var(--card-border);
+  color:var(--text-muted); font-size:0.85rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background 0.2s, color 0.2s; margin-left:0.3rem;
+}
+.close-btn:hover { background:rgba(255,255,255,0.12); color:var(--text); }
+
+/* ── Carousel ─────────────────────────────────────────────────────────── */
+#carousel {
+  position:fixed; z-index:200;
+  width:310px;
+  background:var(--card); border:1px solid var(--card-border);
+  border-radius:var(--radius);
+  backdrop-filter:blur(18px);
+  box-shadow:0 8px 40px rgba(0,0,0,0.6);
+  overflow:hidden;
+  opacity:0; pointer-events:none;
+  transition:opacity 0.25s var(--ease), transform 0.25s var(--ease);
+  transform:translateY(6px);
+}
+#carousel.visible {
+  opacity:1; pointer-events:all; transform:translateY(0);
+}
+
+.carousel-header {
+  padding:0.75rem 1rem 0.6rem;
+  border-bottom:1px solid var(--card-border);
+  display:flex; align-items:flex-start; gap:0.5rem;
+}
+.carousel-header-text { flex:1; min-width:0; }
+#carousel-name {
+  font-size:0.9rem; font-weight:500;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+#carousel-date { font-size:0.72rem; color:var(--text-muted); margin-top:0.15rem; }
+
+.carousel-main {
+  position:relative; aspect-ratio:3/2; overflow:hidden;
+  background:#111;
+}
+#carousel-img {
+  width:100%; height:100%; object-fit:cover; display:block;
+  cursor:pointer; transition:transform 0.3s ease;
+}
+#carousel-img:hover { transform:scale(1.03); }
+
+.carousel-arrow {
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:30px; height:30px; border-radius:50%;
+  background:rgba(5,7,8,0.65); border:1px solid rgba(255,255,255,0.15);
+  color:#fff; font-size:1rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background 0.2s; backdrop-filter:blur(4px);
+}
+.carousel-arrow:hover { background:rgba(5,7,8,0.88); }
+#carousel-prev { left:8px; }
+#carousel-next { right:8px; }
+
+.carousel-thumbs {
+  display:flex; gap:3px; padding:6px;
+  overflow-x:auto; scrollbar-width:none;
+}
+.carousel-thumbs::-webkit-scrollbar { display:none; }
+.carousel-thumb {
+  width:48px; height:34px; flex-shrink:0;
+  object-fit:cover; border-radius:5px; cursor:pointer;
+  opacity:0.55; transition:opacity 0.2s, outline 0.2s;
+  outline:2px solid transparent;
+}
+.carousel-thumb.active { opacity:1; outline-color:var(--accent); }
+
+/* ── Lightbox ─────────────────────────────────────────────────────────── */
+#lightbox {
+  position:fixed; inset:0; z-index:800;
+  background:rgba(4,6,10,0.96);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none;
+  transition:opacity 0.3s var(--ease);
+}
+#lightbox.visible { opacity:1; pointer-events:all; }
+
+#lightbox-inner {
+  position:relative;
+  max-width:min(90vw, 1200px);
+  max-height:90vh;
+  display:flex; flex-direction:column; align-items:center; gap:0.8rem;
+}
+#lightbox-img {
+  max-width:100%; max-height:80vh;
+  object-fit:contain; border-radius:8px;
+  box-shadow:0 8px 60px rgba(0,0,0,0.8);
+}
+#lightbox-meta {
+  text-align:center; padding:0 1rem;
+}
+#lightbox-caption { font-size:0.9rem; font-style:italic; color:var(--text-muted); }
+#lightbox-loc-date { font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; letter-spacing:0.04em; }
+
+.lb-arrow {
+  position:fixed; top:50%; transform:translateY(-50%);
+  width:44px; height:44px; border-radius:50%;
+  background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15);
+  color:#fff; font-size:1.4rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background 0.2s;
+}
+.lb-arrow:hover { background:rgba(255,255,255,0.18); }
+#lb-prev { left:1rem; }
+#lb-next { right:1rem; }
+#lb-close {
+  position:fixed; top:1rem; right:1rem;
+  width:38px; height:38px; border-radius:50%;
+  background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15);
+  color:#fff; font-size:1rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background 0.2s;
+}
+#lb-close:hover { background:rgba(255,255,255,0.18); }
+
+/* ── Photo Gallery Panel ─────────────────────────────────────────────── */
+#gallery {
+  position:fixed; z-index:150;
+  top:0; right:0; width:380px; height:100%;
+  background:var(--card);
+  border-left:1px solid var(--card-border);
+  backdrop-filter:blur(18px);
+  transform:translateX(100%);
+  transition:transform 0.35s var(--ease);
+  display:flex; flex-direction:column;
+  box-shadow:-4px 0 30px rgba(0,0,0,0.4);
+}
+#gallery.open { transform:translateX(0); }
+
+.gallery-header {
+  padding:1rem 1.2rem 0.8rem;
+  border-bottom:1px solid var(--card-border);
+  display:flex; align-items:flex-start; gap:0.6rem;
+  flex-shrink:0;
+}
+.gallery-header-text { flex:1; min-width:0; }
+#gallery-title {
+  font-size:1rem; font-weight:500;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+#gallery-subtitle { font-size:0.75rem; color:var(--text-muted); margin-top:0.2rem; }
+#gallery-close {
+  width:30px; height:30px; border-radius:50%; flex-shrink:0;
+  background:rgba(255,255,255,0.06); border:1px solid var(--card-border);
+  color:var(--text-muted); font-size:0.85rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background 0.2s, color 0.2s;
+}
+#gallery-close:hover { background:rgba(255,255,255,0.12); color:var(--text); }
+
+.gallery-grid {
+  flex:1; overflow-y:auto; padding:8px;
+  display:grid; grid-template-columns:repeat(3, 1fr); gap:4px;
+}
+.gallery-grid::-webkit-scrollbar { width:6px; }
+.gallery-grid::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:3px; }
+
+.gallery-thumb {
+  aspect-ratio:1; object-fit:cover; border-radius:6px;
+  cursor:pointer; width:100%;
+  opacity:0; transition:opacity 0.3s ease;
+  background:#1a1a1a;
+}
+.gallery-thumb.loaded { opacity:1; }
+.gallery-thumb:hover { outline:2px solid var(--accent); outline-offset:-2px; }
+
+.gallery-loading {
+  grid-column:1/-1; text-align:center;
+  padding:2rem; color:var(--text-muted); font-size:0.85rem;
+}
+</style>
+
+</head>
+<body>
+
+<!-- ── Token Warning ─────────────────────────────────────────────── -->
+<div id="token-warning">
+  <h2>Mapbox Token Required</h2>
+  <p>Open <code>output/index.html</code> and set your Mapbox public token in the <code>MAPBOX_TOKEN</code> variable near the bottom of the <code>&lt;script&gt;</code> tag.</p>
+  <p>Get a free token at <strong>mapbox.com → Account → Tokens</strong>.</p>
+</div>
+
+<!-- ── Landing ───────────────────────────────────────────────────── -->
+<div id="landing">
+  <div class="hero-bg" id="hero-0"></div>
+  <div class="hero-bg kb2" id="hero-1"></div>
+  <div class="hero-bg kb3" id="hero-2"></div>
+  <div class="landing-vignette"></div>
+  <div class="landing-gradient"></div>
+  <div id="landing-content">
+    <h1 id="trip-title"></h1>
+    <p id="trip-subtitle"></p>
+    <div class="landing-dots" id="landing-dots">
+      <span class="dot active"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+    </div>
+  </div>
+  <button id="skip-btn">Explore Map →</button>
+</div>
+
+<!-- ── Map ───────────────────────────────────────────────────────── -->
+<div id="map"></div>
+
+<!-- ── UI Overlay ────────────────────────────────────────────────── -->
+<div id="ui-overlay">
+  <button class="map-btn accent" id="play-btn">▶ Play Trip</button>
+</div>
+
+<!-- ── Stop Info Panel ───────────────────────────────────────────── -->
+<div id="stop-panel">
+  <span class="stop-panel-badge" id="stop-badge"></span>
+  <div id="stop-panel-info">
+    <div id="stop-panel-name"></div>
+    <div id="stop-panel-date"></div>
+  </div>
+  <div class="stop-panel-nav">
+    <button class="nav-btn" id="panel-prev">‹</button>
+    <span id="stop-panel-counter"></span>
+    <button class="nav-btn" id="panel-next">›</button>
+    <button class="close-btn" id="panel-close">✕</button>
+  </div>
+</div>
+
+<!-- ── Carousel ──────────────────────────────────────────────────── -->
+<div id="carousel">
+  <div class="carousel-header">
+    <div class="carousel-header-text">
+      <div id="carousel-name"></div>
+      <div id="carousel-date"></div>
+    </div>
+    <span class="stop-panel-badge" id="carousel-badge"></span>
+  </div>
+  <div class="carousel-main">
+    <img id="carousel-img" src="" alt="">
+    <button class="carousel-arrow" id="carousel-prev">‹</button>
+    <button class="carousel-arrow" id="carousel-next">›</button>
+  </div>
+  <div class="carousel-thumbs" id="carousel-thumbs"></div>
+</div>
+
+<!-- ── Lightbox ──────────────────────────────────────────────────── -->
+<div id="lightbox">
+  <div id="lightbox-inner">
+    <img id="lightbox-img" src="" alt="">
+    <div id="lightbox-meta">
+      <div id="lightbox-caption"></div>
+      <div id="lightbox-loc-date"></div>
+    </div>
+  </div>
+  <button class="lb-arrow" id="lb-prev">‹</button>
+  <button class="lb-arrow" id="lb-next">›</button>
+  <button id="lb-close">✕</button>
+</div>
+
+<!-- ── Photo Gallery Panel ──────────────────────────────────────── -->
+<div id="gallery">
+  <div class="gallery-header">
+    <div class="gallery-header-text">
+      <div id="gallery-title"></div>
+      <div id="gallery-subtitle"></div>
+    </div>
+    <span class="stop-panel-badge" id="gallery-badge"></span>
+    <button id="gallery-close">✕</button>
+  </div>
+  <div class="gallery-grid" id="gallery-grid"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════════════════════
+const MAPBOX_TOKEN = 'YOUR_MAPBOX_API_KEY'; // Get from mapbox.com → Account → Tokens
+const MAP_STYLE    = 'mapbox://styles/mapbox/light-v11';
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════════════════
+let tripData, map;
+let markers = {};          // stop.id → {wrap, marker}
+let carouselStop = null;
+let carouselIdx  = 0;
+let hideCarouselTimer = null;
+let lbPhotos = [], lbIdx = 0;
+let playMode  = false;
+let playIdx   = 0;
+let playTimer = null;
+let routeCoords = [];
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!MAPBOX_TOKEN || MAPBOX_TOKEN.startsWith('YOUR_')) {
+    document.getElementById('token-warning').classList.add('show');
+    document.getElementById('landing').style.display = 'none';
+    return;
+  }
+
+  tripData = await fetch('data.json').then(r => r.json());
+
+  // Load photo manifest (Drive streaming URLs) if available
+  try {
+    const manifest = await fetch('photo_manifest.json').then(r => {
+      if (!r.ok) throw new Error('not found');
+      return r.json();
+    });
+    // Attach all_photos to each stop from the manifest
+    for (const stop of tripData.stops) {
+      if (manifest[stop.id]) {
+        stop.all_photos = manifest[stop.id];
+      }
+    }
+    console.log('Photo manifest loaded:', Object.keys(manifest).length, 'stops with Drive URLs');
+  } catch (e) {
+    console.log('No photo_manifest.json found — gallery will use local samples only');
+  }
+
+  populateLanding();
+  initMap();
+  initLanding();
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  LANDING
+// ═══════════════════════════════════════════════════════════════════════════
+function populateLanding() {
+  document.getElementById('trip-title').textContent   = tripData.trip.title;
+  document.getElementById('trip-subtitle').textContent = tripData.trip.subtitle;
+  const heroes = tripData.trip.hero_photos || [];
+  heroes.slice(0,3).forEach((f, i) => {
+    const el = document.getElementById(`hero-${i}`);
+    if (el) el.style.backgroundImage = `url(${f})`;
+  });
+}
+
+function initLanding() {
+  const title    = document.getElementById('trip-title');
+  const subtitle = document.getElementById('trip-subtitle');
+  const dotsWrap = document.getElementById('landing-dots');
+  const skipBtn  = document.getElementById('skip-btn');
+  let   autoTimer;
+
+  // Staggered appearance
+  setTimeout(() => { title.classList.add('visible'); subtitle.classList.add('visible'); }, 350);
+  setTimeout(() => { dotsWrap.classList.add('visible'); skipBtn.classList.add('visible'); }, 900);
+  setTimeout(() => activateHero(0), 300);
+  setTimeout(() => activateHero(1), 3800);
+  setTimeout(() => activateHero(2), 7000);
+
+  autoTimer = setTimeout(transitionToMap, 10200);
+
+  skipBtn.addEventListener('click', () => { clearTimeout(autoTimer); transitionToMap(); });
+}
+
+function activateHero(idx) {
+  document.querySelectorAll('.hero-bg').forEach((el, i) => {
+    el.classList.toggle('active',   i === idx);
+    el.classList.toggle('exiting',  i < idx);
+  });
+  document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+}
+
+function transitionToMap() {
+  document.getElementById('landing').classList.add('fade-out');
+  setTimeout(() => {
+    document.getElementById('landing').style.display = 'none';
+    if (map.loaded()) beginMapReveal(); else map.once('load', beginMapReveal);
+  }, 1400);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  MAP INIT
+// ═══════════════════════════════════════════════════════════════════════════
+function initMap() {
+  mapboxgl.accessToken = MAPBOX_TOKEN;
+  map = new mapboxgl.Map({
+    container: 'map',
+    style: MAP_STYLE,
+    center: [-98.0, 42.0],
+    zoom: 4.0,
+    pitch: 0,
+    bearing: 0,
+    antialias: true,
+  });
+
+  map.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'bottom-right');
+
+  map.on('load', () => {
+    addRouteLayers();
+    addWaypointLayer();
+  });
+}
+
+function addRouteLayers() {
+  routeCoords = tripData.route.geometry.coordinates;
+
+  map.addSource('route-full', {
+    type: 'geojson',
+    data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [] } },
+  });
+  map.addLayer({
+    id: 'route-casing',
+    type: 'line', source: 'route-full',
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': '#000', 'line-width': 5.5, 'line-opacity': 0.3 },
+  });
+  map.addLayer({
+    id: 'route-line',
+    type: 'line', source: 'route-full',
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: {
+      'line-color': '#E07B54',
+      'line-width': 3,
+      'line-opacity': 0.88,
+      'line-dasharray': [2.5, 1.8],
+    },
+  });
+}
+
+function addWaypointLayer() {
+  const features = (tripData.waypoints || []).map(wp => ({
+    type: 'Feature',
+    geometry: { type: 'Point', coordinates: [wp.lng, wp.lat] },
+    properties: { name: wp.name },
+  }));
+  map.addSource('waypoints', { type: 'geojson', data: { type: 'FeatureCollection', features } });
+  map.addLayer({
+    id: 'waypoints',
+    type: 'circle', source: 'waypoints',
+    paint: {
+      'circle-radius': 4.5,
+      'circle-color': '#E07B54',
+      'circle-opacity': 0.6,
+      'circle-stroke-width': 1.5,
+      'circle-stroke-color': 'rgba(255,255,255,0.5)',
+    },
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  MAP REVEAL (after landing fade)
+// ═══════════════════════════════════════════════════════════════════════════
+function beginMapReveal() {
+  animateRoute(() => {
+    addAllMarkers();
+    updateMarkerVisibility();
+  });
+}
+
+function animateRoute(onComplete) {
+  const total = routeCoords.length;
+  let idx = 1;
+  const DURATION_MS = 2200;
+  const step = Math.max(1, Math.ceil(total / (DURATION_MS / 16)));
+
+  function tick() {
+    idx = Math.min(idx + step, total);
+    map.getSource('route-full').setData({
+      type: 'Feature',
+      geometry: { type: 'LineString', coordinates: routeCoords.slice(0, idx) },
+    });
+    if (idx < total) requestAnimationFrame(tick);
+    else if (onComplete) onComplete();
+  }
+  requestAnimationFrame(tick);
+}
+
+function addAllMarkers() {
+  // Add every marker at once (hidden), visibility managed by updateMarkerVisibility
+  tripData.stops.forEach(stop => addMarker(stop));
+  // Update visibility immediately and on every map movement
+  updateMarkerVisibility();
+  map.on('move', updateMarkerVisibility);
+  map.on('idle', updateMarkerVisibility);
+}
+
+// Zoom thresholds for showing markers by type
+const ZOOM_SHOW_OVERNIGHT = 0;   // always visible
+const ZOOM_SHOW_DAY       = 6;   // day stops visible when zoomed in a bit
+
+// Pastel color palette mapped to trip day (Jun 28 = day 0, Aug 3 = day 36)
+const TRIP_START = new Date('2025-06-28T00:00:00Z').getTime();
+const TRIP_DAYS  = 37;
+function getDayColor(arrival) {
+  const t = new Date(arrival).getTime();
+  const day = Math.max(0, Math.min(TRIP_DAYS - 1, Math.floor((t - TRIP_START) / 86400000)));
+  const hue = (day / TRIP_DAYS) * 330;  // span most of color wheel
+  return `hsl(${hue}, 55%, 65%)`;
+}
+
+function makePushpinSVG(color, size) {
+  // Physical pushpin: round orb head on a thin needle
+  const w = size, h = Math.round(size * 1.8);
+  const r = size * 0.4;   // orb radius
+  const cy = r + 1;       // orb center y
+  return `<svg class="pushpin-svg" xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <line x1="${w/2}" y1="${cy + r}" x2="${w/2}" y2="${h}" stroke="#888" stroke-width="1.2" stroke-linecap="round"/>
+    <circle cx="${w/2}" cy="${cy}" r="${r}" fill="${color}" stroke="#fff" stroke-width="1.5"/>
+    <circle cx="${w/2 - r*0.25}" cy="${cy - r*0.25}" r="${r*0.25}" fill="rgba(255,255,255,0.5)"/>
+  </svg>`;
+}
+
+function updateMarkerVisibility() {
+  if (playMode) return;
+
+  const zoom = map.getZoom();
+  const bounds = map.getBounds();
+  const lngSpan = bounds.getEast() - bounds.getWest();
+  const latSpan = bounds.getNorth() - bounds.getSouth();
+  const pad = 0.15;
+  const outer = {
+    w: bounds.getWest()  - lngSpan * pad, e: bounds.getEast()  + lngSpan * pad,
+    s: bounds.getSouth() - latSpan * pad, n: bounds.getNorth() + latSpan * pad,
+  };
+
+  for (const stop of tripData.stops) {
+    const entry = markers[stop.id];
+    if (!entry) continue;
+
+    const el = entry.wrap;
+    const inView = stop.lng >= bounds.getWest() && stop.lng <= bounds.getEast()
+                && stop.lat >= bounds.getSouth() && stop.lat <= bounds.getNorth();
+    const nearEdge = !inView && stop.lng >= outer.w && stop.lng <= outer.e
+                             && stop.lat >= outer.s && stop.lat <= outer.n;
+    const zoomOk = stop.type === 'overnight' ? zoom >= ZOOM_SHOW_OVERNIGHT
+                                              : zoom >= ZOOM_SHOW_DAY;
+
+    if (zoomOk && inView) {
+      el.style.display = 'block';
+      el.style.opacity = '1';
+      el.style.pointerEvents = 'auto';
+    } else if (zoomOk && nearEdge) {
+      el.style.display = 'block';
+      el.style.opacity = '0.3';
+      el.style.pointerEvents = 'auto';
+    } else {
+      el.style.display = 'none';
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  MARKERS
+// ═══════════════════════════════════════════════════════════════════════════
+function addMarker(stop) {
+  const wrap = document.createElement('div');
+  wrap.className = 'marker-wrap';
+
+  const isOvernight = stop.type === 'overnight';
+  const size = isOvernight ? 22 : 14;
+  const color = getDayColor(stop.arrival);
+
+  // Overnight pins: larger orb, thicker needle, dark outline
+  const w = size, h = Math.round(size * 1.8);
+  const r = size * 0.4;
+  const cy = r + 1;
+  const strokeW = isOvernight ? 2 : 1.5;
+  const needleW = isOvernight ? 1.8 : 1.2;
+  const strokeColor = isOvernight ? '#444' : '#666';
+
+  wrap.innerHTML = `<svg class="pushpin-svg" xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <line x1="${w/2}" y1="${cy + r}" x2="${w/2}" y2="${h}" stroke="#777" stroke-width="${needleW}" stroke-linecap="round"/>
+    <circle cx="${w/2}" cy="${cy}" r="${r}" fill="${color}" stroke="${strokeColor}" stroke-width="${strokeW}"/>
+    <circle cx="${w/2 - r*0.25}" cy="${cy - r*0.25}" r="${r*0.25}" fill="rgba(255,255,255,0.5)"/>
+  </svg>`;
+
+  // Hover -> carousel
+  wrap.addEventListener('mouseenter', () => {
+    clearTimeout(hideCarouselTimer);
+    showCarousel(stop, wrap);
+  });
+  wrap.addEventListener('mouseleave', () => {
+    hideCarouselTimer = setTimeout(hideCarousel, 280);
+  });
+  // Click -> open photo gallery
+  wrap.addEventListener('click', () => {
+    hideCarousel();
+    openGallery(stop);
+  });
+
+  // Anchor at bottom = pin tip sits exactly on GPS coordinate
+  const m = new mapboxgl.Marker({ element: wrap, anchor: 'bottom' })
+    .setLngLat([stop.lng, stop.lat])
+    .addTo(map);
+
+  markers[stop.id] = { wrap, marker: m };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  CAROUSEL
+// ═══════════════════════════════════════════════════════════════════════════
+const carousel   = document.getElementById('carousel');
+const carouselEl = {
+  name:   document.getElementById('carousel-name'),
+  date:   document.getElementById('carousel-date'),
+  badge:  document.getElementById('carousel-badge'),
+  img:    document.getElementById('carousel-img'),
+  prev:   document.getElementById('carousel-prev'),
+  next:   document.getElementById('carousel-next'),
+  thumbs: document.getElementById('carousel-thumbs'),
+};
+
+carousel.addEventListener('mouseenter', () => clearTimeout(hideCarouselTimer));
+carousel.addEventListener('mouseleave', () => { hideCarouselTimer = setTimeout(hideCarousel, 280); });
+
+carouselEl.prev.addEventListener('click', () => setCarouselIdx(carouselIdx - 1));
+carouselEl.next.addEventListener('click', () => setCarouselIdx(carouselIdx + 1));
+carouselEl.img.addEventListener('click',  () => openLightbox(carouselStop, carouselIdx));
+
+function showCarousel(stop, markerEl) {
+  carouselStop = stop;
+  carouselIdx  = 0;
+
+  // Position — pick the placement that obscures fewest nearby pins
+  const mapRect = document.getElementById('map').getBoundingClientRect();
+  const mRect   = markerEl.getBoundingClientRect();
+  const CW = 310, CH = 230;
+  const MARGIN = 12;
+  const GAP = 14;
+  const PAD = 30; // extra padding around carousel to keep pins clear
+
+  const cx = mRect.left - mapRect.left + mRect.width / 2;
+  const cy = mRect.top  - mapRect.top;
+
+  // Candidate placements: above, left, right, below
+  const candidates = [
+    { left: cx - CW / 2,              top: cy - CH - GAP },           // above
+    { left: cx - CW - GAP,            top: cy - CH / 2 },             // left
+    { left: cx + mRect.width + GAP,   top: cy - CH / 2 },             // right
+    { left: cx - CW / 2,              top: cy + mRect.height + GAP },  // below
+  ];
+
+  // Clamp each candidate inside the map
+  for (const c of candidates) {
+    c.left = Math.max(MARGIN, Math.min(c.left, mapRect.width - CW - MARGIN));
+    c.top  = Math.max(MARGIN, Math.min(c.top,  mapRect.height - CH - MARGIN));
+  }
+
+  // Gather visible pin positions
+  const visiblePins = [];
+  for (const s of tripData.stops) {
+    if (s.id === stop.id) continue;
+    const entry = markers[s.id];
+    if (!entry || entry.wrap.style.display === 'none') continue;
+    const pr = entry.wrap.getBoundingClientRect();
+    visiblePins.push({
+      x: pr.left - mapRect.left + pr.width / 2,
+      y: pr.top  - mapRect.top  + pr.height / 2,
+    });
+  }
+
+  // Score each candidate: lower is better
+  // Pins inside the padded rect get a weight inversely proportional to distance from center
+  let bestIdx = 0, bestScore = Infinity;
+  for (let i = 0; i < candidates.length; i++) {
+    const c = candidates[i];
+    const rx = c.left - PAD, ry = c.top - PAD;
+    const rw = CW + PAD * 2, rh = CH + PAD * 2;
+    const ccx = c.left + CW / 2, ccy = c.top + CH / 2;
+    let score = 0;
+    for (const pin of visiblePins) {
+      if (pin.x >= rx && pin.x <= rx + rw && pin.y >= ry && pin.y <= ry + rh) {
+        // Inside padded rect — closer pins score higher
+        const dx = pin.x - ccx, dy = pin.y - ccy;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        score += 200 / dist; // heavily penalize close pins
+      }
+    }
+    if (score < bestScore) { bestScore = score; bestIdx = i; }
+  }
+
+  carousel.style.left = candidates[bestIdx].left + 'px';
+  carousel.style.top  = candidates[bestIdx].top + 'px';
+
+  // Populate header
+  carouselEl.name.textContent = stop.name;
+  carouselEl.date.textContent = formatDateRange(stop.arrival, stop.departure);
+  carouselEl.badge.textContent  = stop.type === 'overnight' ? 'Overnight' : 'Day Stop';
+  carouselEl.badge.className   = 'stop-panel-badge ' +
+    (stop.type === 'overnight' ? 'badge-overnight' : 'badge-day');
+
+  // Thumbnails
+  const thumbs = carouselEl.thumbs;
+  thumbs.innerHTML = '';
+  // Clean up previous "View all" button
+  if (carousel._viewAllBtn) { carousel._viewAllBtn.remove(); carousel._viewAllBtn = null; }
+
+  // Use local photos first; if none, fall back to first few Drive manifest photos
+  const drivePhotos = stop.all_photos || [];
+  const displayPhotos = stop.photos.length > 0 ? stop.photos : drivePhotos.slice(0, 3);
+  stop._carouselPhotos = displayPhotos;
+
+  if (displayPhotos.length === 0) {
+    carouselEl.img.src = '';
+    carouselEl.img.alt = 'No photos yet';
+    carouselEl.img.style.display = 'none';
+    carouselEl.prev.style.display = 'none';
+    carouselEl.next.style.display = 'none';
+    const msg = document.createElement('div');
+    msg.style.cssText = 'padding:40px;text-align:center;color:#999;font-size:14px;';
+    msg.textContent = (stop.photo_count || 0) + ' photos taken here';
+    thumbs.appendChild(msg);
+  } else {
+    carouselEl.img.style.display = '';
+    carouselEl.img.referrerPolicy = 'no-referrer';
+    displayPhotos.forEach((ph, i) => {
+      const t = document.createElement('img');
+      t.className = 'carousel-thumb' + (i === 0 ? ' active' : '');
+      t.src = ph.thumb_url || ph.url;
+      t.referrerPolicy = 'no-referrer';
+      t.alt = ph.caption || '';
+      t.addEventListener('click', () => setCarouselIdx(i));
+      thumbs.appendChild(t);
+    });
+  }
+
+  // "View all photos" button — use Drive manifest count when available
+  const galleryCount = drivePhotos.length || stop.photo_count || displayPhotos.length;
+  if (galleryCount > 0) {
+    const viewAll = document.createElement('div');
+    viewAll.style.cssText = 'padding:6px 10px;text-align:center;font-size:0.75rem;color:var(--accent);cursor:pointer;border-top:1px solid var(--card-border);';
+    viewAll.textContent = `View all ${galleryCount} photos`;
+    viewAll.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hideCarousel();
+      openGallery(stop);
+    });
+    carousel.appendChild(viewAll);
+    carousel._viewAllBtn = viewAll;
+  }
+
+  setCarouselPhoto(0);
+  carousel.classList.add('visible');
+}
+
+function setCarouselIdx(i) {
+  const n = (carouselStop._carouselPhotos || carouselStop.photos).length;
+  if (n === 0) return;
+  carouselIdx = (i + n) % n;
+  setCarouselPhoto(carouselIdx);
+}
+
+function setCarouselPhoto(i) {
+  const photos = carouselStop._carouselPhotos || carouselStop.photos;
+  if (!photos.length) return;
+  const ph = photos[i];
+  carouselEl.img.src = ph.thumb_url || ph.url;
+  carouselEl.img.referrerPolicy = 'no-referrer';
+  carouselEl.prev.style.display = i === 0 ? 'none' : '';
+  carouselEl.next.style.display = i === photos.length - 1 ? 'none' : '';
+  document.querySelectorAll('.carousel-thumb').forEach((t, j) =>
+    t.classList.toggle('active', j === i));
+}
+
+function hideCarousel() {
+  carousel.classList.remove('visible');
+  if (carousel._viewAllBtn) { carousel._viewAllBtn.remove(); carousel._viewAllBtn = null; }
+  carouselStop = null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  LIGHTBOX
+// ═══════════════════════════════════════════════════════════════════════════
+const lightbox = document.getElementById('lightbox');
+
+document.getElementById('lb-close').addEventListener('click', closeLightbox);
+document.getElementById('lb-prev').addEventListener('click', () => navLightbox(-1));
+document.getElementById('lb-next').addEventListener('click', () => navLightbox(1));
+lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+document.addEventListener('keydown', e => {
+  if (!lightbox.classList.contains('visible')) return;
+  if (e.key === 'Escape')      closeLightbox();
+  if (e.key === 'ArrowLeft')   navLightbox(-1);
+  if (e.key === 'ArrowRight')  navLightbox(1);
+});
+
+function openLightbox(stop, photoIdx) {
+  lbPhotos = stop.photos;
+  if (!lbPhotos.length) return;
+  lbIdx    = photoIdx;
+  renderLightbox();
+  lightbox.classList.add('visible');
+}
+
+function renderLightbox() {
+  const ph = lbPhotos[lbIdx];
+  const lbImg = document.getElementById('lightbox-img');
+  lbImg.referrerPolicy = 'no-referrer';
+  lbImg.src = ph.url;
+  document.getElementById('lightbox-caption').textContent  = ph.caption || '';
+  document.getElementById('lightbox-loc-date').textContent = ph.timestamp
+    ? formatDate(ph.timestamp) : '';
+  document.getElementById('lb-prev').style.display = lbIdx === 0 ? 'none' : '';
+  document.getElementById('lb-next').style.display = lbIdx === lbPhotos.length - 1 ? 'none' : '';
+}
+
+function navLightbox(dir) {
+  lbIdx = Math.max(0, Math.min(lbPhotos.length - 1, lbIdx + dir));
+  renderLightbox();
+}
+function closeLightbox() { lightbox.classList.remove('visible'); }
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  PHOTO GALLERY PANEL
+// ═══════════════════════════════════════════════════════════════════════════
+const gallery     = document.getElementById('gallery');
+const galleryGrid = document.getElementById('gallery-grid');
+let galleryStop   = null;
+let galleryPhotos = []; // all photos for lightbox navigation
+
+document.getElementById('gallery-close').addEventListener('click', closeGallery);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && gallery.classList.contains('open') &&
+      !lightbox.classList.contains('visible')) closeGallery();
+});
+
+function openGallery(stop) {
+  galleryStop = stop;
+
+  // Header
+  document.getElementById('gallery-title').textContent = stop.name;
+  const badge = document.getElementById('gallery-badge');
+  badge.textContent = stop.type === 'overnight' ? 'Overnight' : 'Day Stop';
+  badge.className = 'stop-panel-badge ' +
+    (stop.type === 'overnight' ? 'badge-overnight' : 'badge-day');
+
+  const totalPhotos = stop.photo_count || stop.photos.length;
+  const localCount = stop.photos.length;
+  const drivePhotos = stop.all_photos || [];
+  const driveCount = drivePhotos.length;
+  const subtitle = driveCount > 0
+    ? `${driveCount} photos`
+    : `${localCount} of ${totalPhotos} photos`;
+  document.getElementById('gallery-subtitle').textContent = subtitle;
+
+  // Build photo list: prefer Drive manifest (all photos), fall back to local samples
+  galleryPhotos = [];
+  galleryGrid.innerHTML = '';
+
+  if (drivePhotos.length > 0) {
+    // Full set from Drive manifest
+    galleryPhotos = drivePhotos;
+  } else if (stop.photos.length > 0) {
+    // Local sample photos only
+    galleryPhotos = stop.photos;
+  }
+
+  if (galleryPhotos.length === 0) {
+    galleryGrid.innerHTML = `<div class="gallery-loading">${totalPhotos} photos taken here<br><span style="font-size:0.75rem;margin-top:0.3rem;display:block">Run the Colab notebook to generate Drive URLs</span></div>`;
+  } else {
+    galleryPhotos.forEach((ph, i) => {
+      const img = document.createElement('img');
+      img.className = 'gallery-thumb';
+      img.alt = ph.caption || ph.filename || '';
+      img.loading = 'lazy';
+      img.referrerPolicy = 'no-referrer';
+      // Use thumbnail URL if available, otherwise full URL
+      img.src = ph.thumb_url || ph.url;
+      img.addEventListener('load', () => img.classList.add('loaded'));
+      img.addEventListener('error', () => {
+        // Show placeholder for failed loads
+        img.style.opacity = '1';
+        img.style.background = '#222';
+        img.alt = ph.filename || 'Failed to load';
+        img.style.fontSize = '0.6rem';
+        img.style.color = '#666';
+        img.style.display = 'flex';
+        img.style.objectFit = 'none';
+      });
+      img.addEventListener('click', () => openGalleryLightbox(i));
+      galleryGrid.appendChild(img);
+    });
+  }
+
+  gallery.classList.add('open');
+}
+
+function openGalleryLightbox(idx) {
+  // Open lightbox using gallery's full photo list
+  lbPhotos = galleryPhotos.map(ph => ({
+    ...ph,
+    url: ph.full_url || ph.url // prefer full-res Drive URL
+  }));
+  lbIdx = idx;
+  renderLightbox();
+  lightbox.classList.add('visible');
+}
+
+function closeGallery() {
+  gallery.classList.remove('open');
+  galleryStop = null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  PLAY TRIP
+// ═══════════════════════════════════════════════════════════════════════════
+const playBtn     = document.getElementById('play-btn');
+const stopPanel   = document.getElementById('stop-panel');
+
+playBtn.addEventListener('click', () => {
+  if (playMode) stopPlay(); else startPlay();
+});
+document.getElementById('panel-prev').addEventListener('click',  () => advancePlay(-1));
+document.getElementById('panel-next').addEventListener('click',  () => advancePlay(1));
+document.getElementById('panel-close').addEventListener('click', stopPlay);
+
+function startPlay() {
+  playMode = true;
+  playIdx  = 0;
+  playBtn.textContent = '■ Stop';
+  playBtn.classList.remove('accent');
+  stopPanel.classList.add('visible');
+  advancePlay(0);
+}
+
+function startPlayAt(idx) {
+  if (playMode) clearTimeout(playTimer);
+  playMode = true;
+  playIdx  = idx;
+  playBtn.textContent = '■ Stop';
+  playBtn.classList.remove('accent');
+  stopPanel.classList.add('visible');
+  flyToStop(tripData.stops[playIdx]);
+  updateStopPanel(tripData.stops[playIdx]);
+  scheduleNext();
+}
+
+function stopPlay() {
+  playMode = false;
+  clearTimeout(playTimer);
+  playBtn.textContent = '▶ Play Trip';
+  playBtn.classList.add('accent');
+  stopPanel.classList.remove('visible');
+  Object.values(markers).forEach(({ wrap }) => wrap.classList.remove('play-active'));
+  updateMarkerVisibility();  // restore zoom-based visibility
+}
+
+function advancePlay(dir) {
+  const stops = tripData.stops;
+  playIdx = Math.max(0, Math.min(stops.length - 1, playIdx + dir));
+  clearTimeout(playTimer);
+  flyToStop(stops[playIdx]);
+  updateStopPanel(stops[playIdx]);
+  if (dir >= 0 && playIdx < stops.length - 1) scheduleNext();
+  else if (playIdx === stops.length - 1) {
+    // End of trip — pull back to full view after a moment
+    playTimer = setTimeout(() => {
+      fitAll();
+      stopPlay();
+    }, 5500);
+  }
+}
+
+function scheduleNext() {
+  playTimer = setTimeout(() => {
+    if (!playMode) return;
+    if (playIdx < tripData.stops.length - 1) {
+      playIdx++;
+      flyToStop(tripData.stops[playIdx]);
+      updateStopPanel(tripData.stops[playIdx]);
+      if (playIdx < tripData.stops.length - 1) scheduleNext();
+      else playTimer = setTimeout(() => { fitAll(); stopPlay(); }, 5500);
+    }
+  }, 5200);
+}
+
+function flyToStop(stop) {
+  Object.values(markers).forEach(({ wrap }) => {
+    wrap.classList.remove('play-active');
+  });
+  if (markers[stop.id]) {
+    const el = markers[stop.id].wrap;
+    el.classList.add('play-active');
+    el.style.display = 'block';
+    el.style.opacity = '1';
+    el.style.pointerEvents = 'auto';
+  }
+
+  map.flyTo({
+    center: [stop.lng, stop.lat],
+    zoom:   stop.type === 'overnight' ? 12.5 : 11.5,
+    duration: 2800,
+    curve: 1.4,
+    essential: true,
+    pitch: 40,
+    bearing: (stop.order % 2 === 0) ? 12 : -8,
+  });
+}
+
+function updateStopPanel(stop) {
+  const badge = document.getElementById('stop-badge');
+  badge.textContent = stop.type === 'overnight' ? 'Overnight' : 'Day Stop';
+  badge.className   = 'stop-panel-badge ' +
+    (stop.type === 'overnight' ? 'badge-overnight' : 'badge-day');
+  document.getElementById('stop-panel-name').textContent = stop.name;
+  document.getElementById('stop-panel-date').textContent =
+    formatDateRange(stop.arrival, stop.departure) + ' · ' + (stop.photos.length || stop.photo_count || 0) + ' photos';
+  document.getElementById('stop-panel-counter').textContent =
+    `${stop.order} / ${tripData.stops.length}`;
+  document.getElementById('panel-prev').disabled = stop.order <= 1;
+  document.getElementById('panel-next').disabled = stop.order >= tripData.stops.length;
+}
+
+function fitAll() {
+  const coords = tripData.stops.map(s => [s.lng, s.lat]);
+  const lngs = coords.map(c => c[0]);
+  const lats = coords.map(c => c[1]);
+  map.fitBounds(
+    [[Math.min(...lngs) - 0.5, Math.min(...lats) - 0.5],
+     [Math.max(...lngs) + 0.5, Math.max(...lats) + 0.5]],
+    { padding: 80, duration: 2500, pitch: 0 }
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════════════════════
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+
+function formatDateRange(a, b) {
+  if (!a) return '';
+  const da = new Date(a);
+  const db = b ? new Date(b) : null;
+  const opts = { month:'short', day:'numeric' };
+  const start = da.toLocaleDateString('en-US', opts);
+  if (!db) return start;
+  if (da.getMonth() === db.getMonth())
+    return `${start}–${db.getDate()}, ${da.getFullYear()}`;
+  return `${start} – ${db.toLocaleDateString('en-US', opts)}, ${da.getFullYear()}`;
+}
+</script>
+</body>
+</html>
