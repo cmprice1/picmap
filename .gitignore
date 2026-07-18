@@ -49,3 +49,6 @@ drive_token.json
 
 # Claude Code
 .claude/
+
+# Large local-only archives
+curated_photos.zip

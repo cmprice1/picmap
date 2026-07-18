@@ -1,210 +1,81 @@
-# 🗺️ PicMap - Road Trip Photo Visualizer
+# PicMap — Road Trip Maps from Geotagged Photos
 
-Automated generation of an interactive map to visualize your road trip from photos. PicMap extracts GPS coordinates and timestamps from your photo's EXIF metadata to create a beautiful interactive map showing your journey.
+Turn a photo library from a road trip into three things:
 
-![PicMap Demo](https://img.shields.io/badge/Python-3.7+-blue.svg)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
+1. **An engine** — a pipeline that extracts GPS/EXIF metadata from any photo
+   collection, clusters it into stops, geocodes them, and builds a
+   road-following route. Reusable for any past or future trip.
+2. **An interactive web app** — a Mapbox GL experience for exploring one
+   specific trip (landing page, animated hero photos, stop-by-stop gallery).
+3. **A print map** — a high-resolution, stylized poster of the whole route,
+   suitable for a photo album or framing.
 
-## ✨ Features
-
-- 📸 **Automatic EXIF extraction** - Reads GPS coordinates and timestamps from photo metadata
-- 🗺️ **Interactive map** - Beautiful Leaflet-based map with OpenStreetMap tiles
-- 📍 **Route visualization** - Shows your journey path connecting all photo locations
-- 🖼️ **Photo popups** - Click markers to see photo previews and details
-- 💾 **Export functionality** - Save your map as PNG or print-friendly PDF
-- 🚀 **One-command setup** - Get started instantly with a single command
-- 🆓 **100% free & open-source** - Uses only free libraries and services
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Python 3.7 or higher
-- Photos with GPS EXIF data (most smartphone photos include this)
-
-### Installation & Run (One Command!)
-
-```bash
-# Clone the repository
-git clone https://github.com/cmprice1/picmap.git
-cd picmap
-
-# Install dependencies and run
-pip install -r requirements.txt && python -m picmap /path/to/your/photos
-```
-
-That's it! Your browser will automatically open to `http://localhost:8000` showing your interactive road trip map.
-
-## 📖 Usage
-
-### Basic Usage
-
-Process photos from a directory and start the web server:
-
-```bash
-python -m picmap /path/to/photos
-```
-
-### Advanced Options
-
-```bash
-# Specify custom output directory
-python -m picmap /path/to/photos -o ./my-trip-map
-
-# Use a different port
-python -m picmap /path/to/photos -p 8080
-
-# Generate files only (no server)
-python -m picmap /path/to/photos --no-server
-```
-
-### View Help
-
-```bash
-python -m picmap --help
-```
-
-## 📁 Project Structure
-
-```
-picmap/
-├── picmap/             # PicMap package
-├── requirements.txt    # Python dependencies
-├── README.md          # This file
-└── output/            # Generated files (created automatically)
-    ├── index.html     # Web application
-    ├── app.js         # JavaScript for map interactivity
-    ├── route.geojson  # Generated route data
-    └── photos/        # Symlink to your photos directory
-```
-
-## 🔧 How It Works
-
-1. **Scan Photos** - Recursively scans the specified directory for image files (JPG, PNG, TIFF)
-2. **Extract EXIF** - Reads GPS coordinates and timestamps from each photo's EXIF metadata
-3. **Generate Route** - Creates a GeoJSON file with points for each photo and a line connecting them
-4. **Build App** - Generates a static HTML/JavaScript application
-5. **Serve** - Starts a local web server to view the interactive map
-
-## 🗺️ Map Features
-
-### Interactive Elements
-- **Markers** - Purple circular markers at each photo location
-- **Route Line** - Smooth line connecting photos in chronological order
-- **Popups** - Click any marker to see:
-  - Photo preview (thumbnail)
-  - Filename
-  - Timestamp
-  - GPS coordinates
-
-### Controls
-- **Fit to Route** - Automatically zoom and pan to show the entire journey
-- **Export Map** - Download the current map view as a PNG image
-- **Print** - Generate a print-friendly version of the map
-
-## 📦 Dependencies
-
-All dependencies are free and open-source:
-
-- **[Pillow](https://python-pillow.org/)** (10.2.0) - Image processing library
-- **[piexif](https://github.com/hMatoba/Piexif)** (1.1.3) - EXIF data extraction
-- **[geopy](https://github.com/geopy/geopy)** (2.4.1) - Geographic calculations
-- **[Leaflet](https://leafletjs.com/)** (1.9.4) - Interactive map library (CDN)
-- **[OpenStreetMap](https://www.openstreetmap.org/)** - Free map tiles
-
-## 📸 Photo Requirements
-
-For PicMap to work, your photos must have GPS EXIF data. Most modern smartphones automatically embed this information when taking photos (if location services are enabled).
-
-### Checking Your Photos
-
-To verify if your photos have GPS data:
-
-**On Mac:**
-```bash
-mdls -name kMDItemLatitude -name kMDItemLongitude photo.jpg
-```
-
-**On Linux:**
-```bash
-exiftool photo.jpg | grep GPS
-```
-
-**On Windows:**
-- Right-click photo → Properties → Details → Look for GPS section
-
-### Sample Photos
-
-If you don't have photos with GPS data, you can:
-1. Enable location services on your smartphone camera
-2. Use sample photos from your past trips
-3. Add GPS data to existing photos using tools like [ExifTool](https://exiftool.org/)
-
-## 🎨 Customization
-
-### Changing Map Style
-
-Edit `picmap/app.py` in the `create_html_app` function to use different tile providers:
-
-```javascript
-// Alternative free tile providers:
-
-// Topographic map
-L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenTopoMap contributors'
-}).addTo(map);
-
-// Humanitarian map
-L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors, Tiles courtesy of HOT'
-}).addTo(map);
-```
-
-### Customizing Colors
-
-In the generated `app.js` file, you can modify:
-- Marker colors: `fillColor` property
-- Route line color: `color` property in polyline options
-- UI gradient: CSS in `index.html`
-
-## 🐛 Troubleshooting
-
-### No photos found
-- Ensure photos have GPS EXIF data
-- Check that photos have supported extensions (.jpg, .jpeg, .png, .tif, .tiff)
-- Verify the directory path is correct
-
-### Photos not displaying in popups
-- Make sure the photos directory is accessible
-- Check browser console for CORS errors
-- Try copying photos instead of symlinking (happens automatically on Windows)
-
-### Server won't start
-- Check if port 8000 is already in use
-- Try a different port with `-p` flag
-- Ensure you have necessary permissions
-
-## 📜 License
-
-MIT License - feel free to use this project for personal or commercial purposes.
-
-## 🤝 Contributing
-
-Contributions are welcome! Feel free to:
-- Report bugs
-- Suggest features
-- Submit pull requests
-
-## 🙏 Acknowledgments
-
-- [Leaflet](https://leafletjs.com/) - Amazing open-source mapping library
-- [OpenStreetMap](https://www.openstreetmap.org/) - Free, collaborative world map
-- All the open-source contributors who make projects like this possible
-
-## 📧 Support
-
-If you encounter any issues or have questions, please open an issue on GitHub.
+The repo currently contains the built output for the **Summer 2025 Great
+American Road Trip** (Los Angeles → Raleigh, June 28 – August 3: 37 days,
+~7,000 miles, 17 states, 8,435 photographs).
 
 ---
 
-**Happy mapping! 🗺️✈️📸**
+## Repo layout
+
+| Path | What it is |
+|---|---|
+| `output/` | The built 2025 trip: web app (`index.html`), trip data (`data.json`, `trip_metadata.json`, manifests), sample photos, print map (`output/print/`) |
+| `extract_metadata.py`, `colab_launcher.ipynb` | **Phase 1** — runs in Google Colab against a Drive-mounted Google Takeout; scans photos + JSON sidecars, extracts GPS/timestamps → `trip_metadata.json` |
+| `build_from_captured.py`, `classify_overnight.py`, `assign_photos.py`, `trim_photos.py` | **Phase 2** — local: clusters photos into stops, classifies day vs. overnight, geocodes names, assigns gallery photos → `data.json` |
+| `build_route.py` | Snaps the chronological GPS path to real roads via the Mapbox Directions API → `route` in `data.json` (already done for 2025) |
+| `build_print_map.py` | Renders the print poster from `data.json` — no network needed |
+| `assets/us-states-10m.json` | US state boundaries (public domain, [us-atlas](https://github.com/topojson/us-atlas) / US Census) used by the print map |
+| `config.json` | Pipeline tuning: clustering radii, overnight thresholds, trip title |
+| `picmap/`, `create_sample_photos.py`, `test_picmap.sh`, `tests/` | **v1 engine** — the original one-shot `python -m picmap <photo dir>` Leaflet app. Still works for quick maps of any folder. `IMPLEMENTATION_SUMMARY.md` / `USAGE_EXAMPLES.md` document this era |
+| `PROJECT_STATUS.md` | Current state of the project, where everything lives, cleanup checklist |
+
+## 1 · View the 2025 trip web app
+
+```bash
+python -m http.server 8080 --directory output
+# open http://localhost:8080
+```
+
+The app asks for a Mapbox access token on first load (get one free at
+mapbox.com → Account → Tokens); it is stored in your browser only. Full-size
+photo streaming pulls from Google Drive; the bundled `output/photos/` has
+representative photos per stop so the app works standalone.
+
+## 2 · Build a picmap for a new trip (v2 pipeline)
+
+1. Google Takeout of the trip's photos → Google Drive.
+2. Open `colab_launcher.ipynb` in Colab, point it at the Takeout folder
+   (use `--album` for a single album). It writes `trip_metadata.json`.
+3. Locally: `python build_from_captured.py` (clusters + geocodes; tune
+   `config.json`), then `python build_route.py` (needs a Mapbox token pasted
+   at the top of the script — do not commit it).
+4. Serve `output/` as above.
+
+For a quick-and-dirty map of any local folder of geotagged photos, the v1
+one-liner still works: `pip install -r requirements.txt && python -m picmap /path/to/photos`.
+
+## 3 · Regenerate the print map
+
+```bash
+python build_print_map.py
+```
+
+Reads `output/data.json` + `assets/us-states-10m.json`, writes to
+`output/print/`:
+
+- `roadtrip_print_24x12.svg` — vector master, scales to any print size
+- `roadtrip_print_24x12.png` — 7200×3600 (300 DPI at 24×12 in, i.e. a
+  two-page spread in a 12×12 album)
+- `preview.png` — small proof
+
+Stop display names and label positions are hand-tuned in `DISPLAY_NAMES` /
+`LABEL_STYLE` at the top of the script; page size, palette, and fonts are
+constants there too. Uses Windows system fonts (Georgia, Gabriola, Corbel).
+
+## Secrets & big files (not in git)
+
+- `credentials.json`, `token.json`, `drive_token.json` — Google OAuth for
+  Drive/Photos APIs; local only, gitignored, never committed.
+- `curated_photos.zip` (~1.4 GB) and `output/photos/` originals — local /
+  cloud-storage only; git carries the app, data JSON, and print outputs.
