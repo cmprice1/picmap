@@ -98,7 +98,7 @@ F_LABEL_B = _font(["DMSans-500.ttf", "corbelb.ttf", "segoeuib.ttf"])
 F_ITALIC = _font(["DMSans-Italic400.ttf", "corbeli.ttf"])
 
 # ── Trip constants ───────────────────────────────────────────────────────
-RALEIGH = (-78.6382, 35.7796)  # trip's stated destination (no GPS photos on final leg)
+RALEIGH = (-78.6382, 35.7796)  # final destination; route reaches it via build_final_leg.py
 TRIP_TITLE = "THE GREAT AMERICAN ROAD TRIP"
 TRIP_SUBTITLE = "LOS ANGELES  TO  RALEIGH"
 TRIP_DATES = "JUNE 28 – AUGUST 3, 2025"
@@ -135,6 +135,7 @@ STOP_OVERRIDES = {
 # marker + plain label, no gold overnight styling.
 WAYPOINTS = [
     dict(name="Cincinnati", lon=-84.512, lat=39.103),
+    dict(name="Durham", lon=-78.8986, lat=35.9940),
 ]
 
 # Label placement overrides, keyed by display name.
@@ -163,6 +164,7 @@ LABEL_STYLE = {
     "Traverse City":   dict(dx=8, dy=-13, ha="left", va="center"),
     "Bloomington":     dict(dx=-11, dy=-7, ha="right", va="center"),
     "Cincinnati":      dict(dx=-2, dy=-12, ha="center", va="top"),
+    "Durham":          dict(dx=-2, dy=11, ha="center", va="bottom"),
     "Raleigh":         dict(dx=10, dy=-4, ha="left", va="center"),
 }
 
@@ -655,11 +657,11 @@ def main(pictorial=True, label=None):
         path_effects=[pe.SimpleLineShadow(offset=(1.2, -1.2), shadow_color="#8a6a50", alpha=0.25, rho=1), pe.Normal()],
     )
 
-    # Dashed final leg to Raleigh
-    ex, ey = proj_route[-1]
-    qx, qy = project(*RALEIGH)
-    ax.plot([ex, qx], [ey, qy], color=C_ROUTE, lw=2.2, ls=(0, (1.6, 2.4)),
-            solid_capstyle="round", zorder=5, alpha=0.85)
+    # The route now follows real roads all the way to Raleigh (the final
+    # leg past the last GPS photo was routed in by build_final_leg.py), so
+    # there is no synthetic dashed segment any more — the star sits at the
+    # true route end.
+    qx, qy = proj_route[-1]
 
     # ── Stops ───────────────────────────────────────────────────────────
     dx = [project(s["lng"], s["lat"])[0] for s in day_stops]

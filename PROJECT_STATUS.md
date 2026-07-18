@@ -28,11 +28,14 @@ when returning to the project.
 
 ## Trip data facts
 
-- 8,435 photos, 6,137 with GPS; 154 stops (23 overnight); route = 10,146
-  road-snapped points (Mapbox Directions, already baked into `data.json`).
-- GPS data ends at Surry County, NC (Aug 3). The final leg to Raleigh has no
-  geotagged photos — the print map shows it as a dashed line.
-- Stats derived from route: ~7,077 miles driven, 17 states.
+- 8,435 photos, 6,137 with GPS; 154 stops (23 overnight); route = 10,320
+  road-snapped points (10,146 from Mapbox Directions on the GPS track, plus
+  174 for the final leg — see below — baked into `data.json`).
+- GPS photo data ends near Mt Airy, NC (Surry County, Aug 3). The final drive
+  into the Research Triangle (Mt Airy → Durham → Raleigh) had no geotagged
+  photos; `build_final_leg.py` routed it on real roads via OSRM and appended
+  it, so the route now reaches Raleigh with no synthetic dashed segment.
+- Stats derived from route: ~7,226 miles driven, 17 states.
 
 ## Fixed on July 18, 2026 (uncommitted)
 

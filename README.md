@@ -24,6 +24,7 @@ American Road Trip** (Los Angeles → Raleigh, June 28 – August 3: 37 days,
 | `extract_metadata.py`, `colab_launcher.ipynb` | **Phase 1** — runs in Google Colab against a Drive-mounted Google Takeout; scans photos + JSON sidecars, extracts GPS/timestamps → `trip_metadata.json` |
 | `build_from_captured.py`, `classify_overnight.py`, `assign_photos.py`, `trim_photos.py` | **Phase 2** — local: clusters photos into stops, classifies day vs. overnight, geocodes names, assigns gallery photos → `data.json` |
 | `build_route.py` | Snaps the chronological GPS path to real roads via the Mapbox Directions API → `route` in `data.json` (already done for 2025) |
+| `build_final_leg.py` | Appends the final drive past the last GPS photo (Mt Airy → Durham → Raleigh) using OSRM road routing — no token needed; idempotent (already done for 2025) |
 | `build_print_map.py` | Renders the print poster from `data.json` — no network needed |
 | `assets/us-states-10m.json` | US state boundaries (public domain, [us-atlas](https://github.com/topojson/us-atlas) / US Census) used by the print map |
 | `config.json` | Pipeline tuning: clustering radii, overnight thresholds, trip title |
