@@ -68,10 +68,21 @@ Reads `output/data.json` + `assets/us-states-10m.json`, writes to
 - `roadtrip_print_24x12.png` — 7200×3600 (300 DPI at 24×12 in, i.e. a
   two-page spread in a 12×12 album)
 - `preview.png` — small proof
+- `versions/vN_<date>_<style>[-label].*` — **every run is archived here and
+  never overwritten**; only the three unversioned files above (the
+  "latest" pointer) get replaced. Pass `--label "some-tag"` to name a run.
+  If you ever need an older render back, it's in `versions/`.
 
-Stop display names and label positions are hand-tuned in `DISPLAY_NAMES` /
-`LABEL_STYLE` at the top of the script; page size, palette, and fonts are
-constants there too. Uses Windows system fonts (Georgia, Gabriola, Corbel).
+Pass `--plain` for the route + state outlines only (no mountains/trees/
+lakes/park markers), written to `roadtrip_print_24x12_plain.{svg,png}` +
+its own `versions/` entries.
+
+Stop display names, per-stop corrections, and label positions are
+hand-tuned in `DISPLAY_NAMES` / `STOP_OVERRIDES` / `LABEL_STYLE` at the top
+of the script; pictorial glyph placements are in `MOUNTAINS` / `CONIFERS`
+/ `BROADLEAF` / `LAKES` / `PARKS`. Page size, palette, and fonts are
+constants there too. Fonts: DM Sans + Pinyon Script (`assets/fonts/`,
+matches the web app), falling back to Windows system fonts if missing.
 
 ## Secrets & big files (not in git)
 
