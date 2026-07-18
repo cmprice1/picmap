@@ -7,9 +7,10 @@ when returning to the project.
 
 | Location | Role | State |
 |---|---|---|
-| github.com/cmprice1/picmap | Home of the code | `main` = old v1 engine; **`v2-colab` = the real project** (11 commits ahead, fully pushed). Merge pending — see checklist |
-| `…\Side Projects\Photo Tools\2025 Roadtrip Map\roadtrip-map\` | **The live working copy** (this folder), checkout of `v2-colab` | Working tree has: print-map work, README rewrite, data fixes (all July 18, 2026, uncommitted) |
-| `C:\Users\hgste\picmap` | Stale Feb 2026 clone of v1 `main` | **No unpushed commits, no stashes.** Only unique content: original iCloud `Photos (N).zip` batches + HEIC→JPG experiments in `photos/` (~564 MB) and a v1 demo build in `output/` (~312 MB). Safe to delete once the zips are archived |
+| github.com/cmprice1/picmap | Home of the code | **`main` = the full project** (v2 pipeline + trip app + print map) as of July 18, 2026. `v2-colab` merged into it; that branch can be deleted at leisure |
+| `C:\Users\hgste\code\picmap` | **The live working copy** (this folder), on `main` | Moved out of OneDrive July 18, 2026 (git dirs + sync don't mix). Includes `output/photos/` app media (~1.4 GB, gitignored) |
+| `…\Side Projects\Photo Tools\2025 Roadtrip Map\media\` (OneDrive) | Media archive | `curated_photos.zip` (1.4 GB) + `icloud-originals/` (the original iCloud `Photos (N).zip` exports rescued from the old clone) |
+| `C:\Users\hgste\picmap` | Stale Feb 2026 clone of v1 `main` | **No unpushed commits, no stashes.** Pending deletion once its photo zips are confirmed archived |
 
 ## The three outputs
 
@@ -47,20 +48,23 @@ when returning to the project.
 - New: `build_print_map.py`, `assets/us-states-10m.json`, `output/print/*`,
   this file, rewritten `README.md`.
 
-## Cleanup checklist (pending approval / not yet done)
+## Cleanup log
 
-1. **Commit** the July 18 working-tree changes on `v2-colab`.
-2. **Merge `v2-colab` → `main`** and push — makes GitHub's front page reflect
-   the real project instead of v1.
-3. **Move the repo out of OneDrive** (git dirs in OneDrive risk sync
-   corruption; this working copy is 2.8 GB): repo → `C:\Users\hgste\code\picmap`;
-   keep `curated_photos.zip` + full-res media in OneDrive/cloud, outside git.
-4. **Archive then delete `C:\Users\hgste\picmap`**: move `photos/*.zip`
-   (original iCloud exports) to a media archive first; everything else there
-   is redundant (876 MB reclaimed).
-5. Optional prune: `output/photos/` keeps 393 MB of HEIC originals + ~1 GB of
+Done July 18, 2026:
+
+1. ~~Commit the July 18 working-tree changes~~ (`e62f80b`, on both branches).
+2. ~~Merge `v2-colab` → `main` and push~~ — GitHub front page now shows the
+   real project.
+3. ~~Move the repo out of OneDrive~~ → `C:\Users\hgste\code\picmap`;
+   `curated_photos.zip` → OneDrive `…\2025 Roadtrip Map\media\`.
+4. ~~Archive the old clone's photo zips~~ → OneDrive `media\icloud-originals\`.
+
+Still open:
+
+5. Delete `C:\Users\hgste\picmap` (stale clone; nothing unique left).
+6. Optional prune: `output/photos/` keeps 393 MB of HEIC originals + ~1 GB of
    video alongside the 74 MB of JPGs the app displays — verify references,
    then thin (originals live in Google Photos/Drive).
-6. Pipeline TODO: epoch-timestamp fallback in `extract_metadata.py`;
+7. Pipeline TODO: epoch-timestamp fallback in `extract_metadata.py`;
    `build_route.py` reads its Mapbox token from a constant — switch to an env
    var so it can never be committed by accident.
