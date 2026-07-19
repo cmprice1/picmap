@@ -217,7 +217,7 @@ function renderDyn() {
       x: lu, y: lv, class: "lbl park", "font-size": FS_PARK,
       "text-anchor": HA2ANCHOR[pk.ha || "left"], "dominant-baseline": "middle",
     }, gDyn);
-    t.textContent = pk.name;
+    fillLines(t, pk.name, "center", FS_PARK);
     attachDrag(t, { type: "park-label", idx });
     markSel(t, { type: "park-label", idx });
   });
@@ -267,6 +267,26 @@ function starPath(cx, cy, r) {
   return d + "Z";
 }
 
+// Fill a <text> with one or more lines. A "\n" in the string becomes a
+// second stacked line (matches the poster, where matplotlib splits on \n).
+function fillLines(textEl, text, va, fontSize) {
+  const lines = String(text).split("\n");
+  textEl.textContent = "";
+  if (lines.length === 1) { textEl.textContent = lines[0]; return; }
+  const lh = fontSize * 1.05;
+  const x = textEl.getAttribute("x");
+  const firstDy = va === "top" ? 0
+    : va === "bottom" ? -(lines.length - 1) * lh
+    : -(lines.length - 1) / 2 * lh;
+  lines.forEach((ln, i) => {
+    const ts = document.createElementNS(SVG_NS, "tspan");
+    ts.setAttribute("x", x);
+    ts.setAttribute("dy", i === 0 ? firstDy : lh);
+    ts.textContent = ln;
+    textEl.appendChild(ts);
+  });
+}
+
 function drawLabel(name, anchorU, anchorV, opts) {
   const st = layout.label_style[name] || { dx: 9, dy: 0, ha: "left", va: "center" };
   const [lu, lv] = labelPos(anchorU, anchorV, st);
@@ -275,7 +295,7 @@ function drawLabel(name, anchorU, anchorV, opts) {
     "text-anchor": HA2ANCHOR[st.ha || "left"],
     "dominant-baseline": VA2BASE[st.va || "center"],
   }, gDyn);
-  t.textContent = name;
+  fillLines(t, name, st.va || "center", opts.size);
   attachDrag(t, { type: "label", name, stopKey: opts.stopKey });
   markSel(t, { type: "label", name });
   if (opts.sub) {
@@ -500,7 +520,12 @@ function select(ref) {
 function listItem(parent, ref, label, kind) {
   const d = document.createElement("div");
   d.className = "item" + (sameSel(sel, ref) ? " selected" : "");
-  d.innerHTML = `<span>${label}</span><span class="kind">${kind}</span>`;
+  const a = document.createElement("span");
+  a.textContent = displayName(label);
+  const b = document.createElement("span");
+  b.className = "kind";
+  b.textContent = kind;
+  d.append(a, b);
   d.addEventListener("click", () => select(ref));
   parent.appendChild(d);
 }
@@ -573,6 +598,47 @@ function textInput(value, onchange) {
   i.addEventListener("change", () => onchange(i.value));
   return i;
 }
+// Multi-line name box — Enter inserts a line break (unlike a plain <input>).
+function textArea(value, onchange) {
+  const t = document.createElement("textarea");
+  t.rows = 2; t.value = value;
+  t.style.cssText = "flex:1 1 auto; width:60px; min-height:38px; font:inherit;" +
+    "font-size:12px; padding:3px 6px; background:#37332a; border:1px solid #57503f;" +
+    "border-radius:5px; color:#F5F0E8; resize:vertical;";
+  t.addEventListener("change", () => onchange(t.value));
+  return t;
+}
+// Toggle a label between one line and two: joins on "\n", or splits at the
+// space nearest the character-count midpoint for the most balanced break.
+function splitBalanced(name) {
+  if (name.includes("\n")) return name.replace(/\n+/g, " ");
+  const words = name.split(/\s+/).filter(Boolean);
+  if (words.length < 2) return name;
+  let best = 1, bestDiff = Infinity;
+  for (let i = 1; i < words.length; i++) {
+    const diff = Math.abs(words.slice(0, i).join(" ").length -
+                          words.slice(i).join(" ").length);
+    if (diff < bestDiff) { bestDiff = diff; best = i; }
+  }
+  return words.slice(0, best).join(" ") + "\n" + words.slice(best).join(" ");
+}
+const displayName = n => String(n).replace(/\n/g, " ⏎ ");
+// Name editor: textarea + a one/two-line toggle button. `apply(newName)`
+// persists the change (and migrates any label_style keyed by the old name).
+function nameEditor(box, btnrow, current, apply) {
+  propRow(box, "name", textArea(current, apply));
+  const toggle = document.createElement("button");
+  toggle.textContent = current.includes("\n") ? "One line" : "Two lines";
+  toggle.title = "Break the label across two lines (or rejoin)";
+  toggle.addEventListener("click", () => apply(splitBalanced(current)));
+  btnrow.appendChild(toggle);
+}
+function migrateLabelStyle(oldName, newName) {
+  if (oldName !== newName && layout.label_style[oldName]) {
+    layout.label_style[newName] = layout.label_style[oldName];
+    delete layout.label_style[oldName];
+  }
+}
 function mutate(fn) {
   const snap = structuredClone(layout);
   fn();
@@ -592,7 +658,7 @@ function renderProps() {
   btnrow.className = "btnrow";
 
   if (sel.type === "label") {
-    title.textContent = `Label: ${sel.name}`;
+    title.textContent = `Label: ${displayName(sel.name)}`;
     const st = layout.label_style[sel.name] || { dx: 9, dy: 0, ha: "left", va: "center" };
     const upd = patch => mutate(() => {
       layout.label_style[sel.name] = { ...st, ...patch };
@@ -601,22 +667,28 @@ function renderProps() {
     propRow(box, "dy (pt)", numInput(st.dy, 0.5, v => upd({ dy: v })));
     propRow(box, "ha", selInput(["left", "center", "right"], st.ha, v => upd({ ha: v })));
     propRow(box, "va", selInput(["center", "top", "bottom"], st.va, v => upd({ va: v })));
+    // Stops and waypoints can be renamed / broken to two lines; start & end
+    // (Los Angeles / Raleigh) are fixed labels, so only offer it when there's
+    // a backing record to write to.
+    const wpIdx = layout.waypoints.findIndex(w => w.name === sel.name);
     if (sel.stopKey) {
-      const rename = textInput(sel.name, v => mutate(() => {
+      nameEditor(box, btnrow, sel.name, v => mutate(() => {
         const ov = layout.stop_overrides[sel.stopKey];
         if (ov) ov.name = v;
         else layout.display_names[sel.stopKey] = v;
-        if (layout.label_style[sel.name]) {
-          layout.label_style[v] = layout.label_style[sel.name];
-          delete layout.label_style[sel.name];
-        }
+        migrateLabelStyle(sel.name, v);
         sel = { ...sel, name: v };
       }));
-      propRow(box, "rename", rename);
       const hide = document.createElement("button");
       hide.textContent = "Hide stop"; hide.className = "danger";
       hide.addEventListener("click", () => hideStop(sel.stopKey));
       btnrow.appendChild(hide);
+    } else if (wpIdx >= 0) {
+      nameEditor(box, btnrow, sel.name, v => mutate(() => {
+        layout.waypoints[wpIdx].name = v;
+        migrateLabelStyle(sel.name, v);
+        sel = { ...sel, name: v };
+      }));
     }
   } else if (sel.type === "mtn" || sel.type === "con" || sel.type === "brd") {
     const arrName = { mtn: "mountains", con: "conifers", brd: "broadleaf" }[sel.type];
@@ -633,8 +705,8 @@ function renderProps() {
     addDelete(btnrow);
   } else if (sel.type === "park" || sel.type === "park-label") {
     const pk = layout.parks[sel.idx];
-    title.textContent = `Park: ${pk.name}`;
-    propRow(box, "name", textInput(pk.name, v => mutate(() => { pk.name = v; })));
+    title.textContent = `Park: ${displayName(pk.name)}`;
+    nameEditor(box, btnrow, pk.name, v => mutate(() => { pk.name = v; }));
     propRow(box, "kind", selInput(["mountain", "tree", "bridge", "dune"], pk.kind,
       v => mutate(() => { pk.kind = v; })));
     if (pk.kind === "mountain")
@@ -647,8 +719,10 @@ function renderProps() {
     addDelete(btnrow);
   } else if (sel.type === "wp") {
     const w = layout.waypoints[sel.idx];
-    title.textContent = `City: ${w.name}`;
-    propRow(box, "name", textInput(w.name, v => mutate(() => { w.name = v; })));
+    title.textContent = `City: ${displayName(w.name)}`;
+    nameEditor(box, btnrow, w.name, v => mutate(() => {
+      migrateLabelStyle(w.name, v); w.name = v;
+    }));
     addDelete(btnrow);
   } else if (sel.type === "lake") {
     title.textContent = `Lake: ${sel.name}`;

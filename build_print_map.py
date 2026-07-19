@@ -533,6 +533,7 @@ def main(pictorial=True, label=None):
             t = ax.annotate(
                 park["name"], (px, py), xytext=(park["dx"], park["dy"]),
                 textcoords="offset points", ha=park["ha"], va="center",
+                multialignment=park["ha"],  # per-line alignment for "\n" labels
                 fontsize=6.8, color=C_INK_SOFT, fontproperties=F_ITALIC, zorder=9,
             )
             t.set_path_effects(halo)
@@ -611,9 +612,11 @@ def main(pictorial=True, label=None):
     # ── Labels ──────────────────────────────────────────────────────────
     def put_label(name, px, py, size=8.8, bold=False, color=C_INK, sub=None):
         st = LABEL_STYLE.get(name, dict(dx=9, dy=0, ha="left", va="center"))
+        # A "\n" in the name renders as two stacked lines (matplotlib native);
+        # multialignment keeps the lines aligned to the label's ha side.
         t = ax.annotate(
             name, (px, py), xytext=(st["dx"], st["dy"]), textcoords="offset points",
-            ha=st["ha"], va=st["va"], fontsize=size, color=color,
+            ha=st["ha"], va=st["va"], multialignment=st["ha"], fontsize=size, color=color,
             fontproperties=F_LABEL_B if bold else F_LABEL, zorder=9,
         )
         t.set_path_effects(halo)

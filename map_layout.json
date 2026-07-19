@@ -49,20 +49,20 @@
       "va": "center"
     },
     "Missoula": {
-      "dx": -10,
-      "dy": 2,
+      "dx": -9.1,
+      "dy": 7.1,
       "ha": "right",
       "va": "center"
     },
     "Kalispell": {
-      "dx": -10,
-      "dy": 3,
+      "dx": -7,
+      "dy": 0,
       "ha": "right",
       "va": "center"
     },
     "Paradise Valley": {
-      "dx": 9,
-      "dy": 17,
+      "dx": -12.8,
+      "dy": 36.6,
       "ha": "left",
       "va": "center"
     },
@@ -73,20 +73,20 @@
       "va": "center"
     },
     "Yellowstone": {
-      "dx": 14,
-      "dy": -16,
+      "dx": 6.3,
+      "dy": -26.2,
       "ha": "left",
       "va": "center"
     },
     "Billings": {
-      "dx": 10,
-      "dy": 8,
+      "dx": 13.8,
+      "dy": 5,
       "ha": "left",
       "va": "center"
     },
     "Black Hills": {
-      "dx": 0,
-      "dy": 11,
+      "dx": -41.4,
+      "dy": 2.5,
       "ha": "center",
       "va": "bottom"
     },
@@ -103,32 +103,26 @@
       "va": "bottom"
     },
     "Door County": {
-      "dx": 11,
-      "dy": -16,
+      "dx": -55.2,
+      "dy": -34.8,
       "ha": "left",
       "va": "center"
     },
-    "Cedar River": {
-      "dx": -10,
-      "dy": 5,
-      "ha": "right",
-      "va": "center"
-    },
     "Traverse City": {
-      "dx": 8,
-      "dy": -13,
+      "dx": 8.4,
+      "dy": -7.9,
       "ha": "left",
       "va": "center"
     },
     "Bloomington": {
-      "dx": -11,
-      "dy": -7,
+      "dx": 9.5,
+      "dy": -14.3,
       "ha": "right",
       "va": "center"
     },
     "Cincinnati": {
-      "dx": -2,
-      "dy": -12,
+      "dx": 8.7,
+      "dy": 21.3,
       "ha": "center",
       "va": "top"
     },
@@ -144,7 +138,13 @@
       "ha": "left",
       "va": "center"
     },
-    "West                 Yellowstone": {
+    "UP": {
+      "dx": 2,
+      "dy": 12.3,
+      "ha": "right",
+      "va": "center"
+    },
+    "West\nYellowstone": {
       "dx": 5,
       "dy": 14,
       "ha": "right",
@@ -160,8 +160,8 @@
     "Park County|2025-07-20": "Yellowstone",
     "Lawrence County|2025-07-23": "Black Hills",
     "Town of Egg Harbor|2025-07-27": "Door County",
-    "Stephenson Township|2025-07-29": "Cedar River",
-    "West Yellowstone|2025-07-19": "West                 Yellowstone"
+    "Stephenson Township|2025-07-29": "UP",
+    "West Yellowstone|2025-07-19": "West\nYellowstone"
   },
   "stop_overrides": {
     "Las Vegas|2025-07-03": {
@@ -410,28 +410,28 @@
     ],
     "Flathead Lake": [
       [
-        -114.32,
-        47.95
+        -114.2084,
+        47.9537
       ],
       [
-        -114.15,
-        48.05
+        -114.0384,
+        48.0537
       ],
       [
-        -113.98,
-        47.95
+        -113.8684,
+        47.9537
       ],
       [
-        -113.95,
-        47.78
+        -113.8384,
+        47.7837
       ],
       [
-        -114.08,
-        47.66
+        -113.9684,
+        47.6637
       ],
       [
-        -114.25,
-        47.72
+        -114.1384,
+        47.7237
       ]
     ],
     "Yellowstone Lake": [
@@ -464,8 +464,8 @@
       "lat": 48.6,
       "kind": "mountain",
       "big": true,
-      "dx": 7,
-      "dy": -2,
+      "dx": 0.6,
+      "dy": -9.3,
       "ha": "left"
     },
     {
@@ -480,11 +480,11 @@
     },
     {
       "name": "New River Gorge National Park",
-      "lon": -81.95,
-      "lat": 37.72,
+      "lon": -81.6463,
+      "lat": 37.6514,
       "kind": "bridge",
-      "dx": -7,
-      "dy": -2,
+      "dx": 8.4,
+      "dy": 12.1,
       "ha": "right"
     },
     {
@@ -492,8 +492,8 @@
       "lon": -87.05,
       "lat": 41.63,
       "kind": "dune",
-      "dx": 9,
-      "dy": 8,
+      "dx": 13.7,
+      "dy": 2.9,
       "ha": "left"
     }
   ],
@@ -507,6 +507,11 @@
       "name": "Durham",
       "lon": -78.8986,
       "lat": 35.994
+    },
+    {
+      "name": "",
+      "lon": -81.1666,
+      "lat": 38.0101
     }
   ]
 }

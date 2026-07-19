@@ -95,7 +95,12 @@ A browser editor for `map_layout.json`: drag stop labels and pictorial
 glyphs (mountains, trees, lakes, park markers) into place on an
 approximate preview — the side panel selects crowded items, edits
 anchoring (`ha`/`va`), scale, and names, adds/removes glyphs, and can
-hide stops. **Save** writes back to `map_layout.json` (with a `.bak`);
+hide stops. To break a label across **two lines** (e.g. "West
+Yellowstone"), select it and click "Two lines" (auto-splits at the
+balance point), or type your own break in the name box — the multi-line
+name box takes Enter for a manual line break. A `\n` in a label name
+renders as stacked lines in both the editor and the poster. **Save**
+writes back to `map_layout.json` (with a `.bak`);
 **Render poster** runs `build_print_map.py` for a real print-quality
 check (`open last render`). Undo/redo with Ctrl+Z / Ctrl+Y; wheel zooms,
 background-drag pans. Check "allow dragging stop markers" to move a
