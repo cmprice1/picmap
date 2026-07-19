@@ -48,7 +48,8 @@ import matplotlib.font_manager as fm
 import matplotlib.patheffects as pe
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection, PolyCollection
-from matplotlib.patches import Circle, Polygon as MplPolygon
+from matplotlib.patches import Circle, PathPatch, Polygon as MplPolygon
+from matplotlib.path import Path as MplPath
 
 # ── Paths ────────────────────────────────────────────────────────────────
 ROOT = Path(__file__).parent
@@ -135,6 +136,14 @@ CONIFERS = [tuple(e) for e in _layout["conifers"]]
 BROADLEAF = [tuple(e) for e in _layout["broadleaf"]]
 LAKES = {k: [tuple(p) for p in v] for k, v in _layout["lakes"].items()}
 PARKS = _layout["parks"]
+
+# Custom stencil icons: vector outlines traced from the trip's own
+# illustrations by build_icons.py; placements live in the layout.
+ICONS_PATH = ROOT / "assets" / "icons.json"
+ICON_DEFS = (json.loads(ICONS_PATH.read_text(encoding="utf-8"))
+             if ICONS_PATH.exists() else {})
+ICON_PLACEMENTS = _layout.get("icons", [])
+ICON_BASE_IN = 0.35   # icon height in page inches at scale 1.0
 
 
 # ── TopoJSON decoding (pure python) ──────────────────────────────────────
@@ -404,6 +413,20 @@ def draw_skyline(ax, x, y, inch, s, zorder):
                     color=C_RELIEF, lw=0.75 * s, zorder=zorder)
 
 
+def draw_icon(ax, icon_def, x, y, inch, s, zorder):
+    """Filled compound path for a traced stencil icon, anchored at its
+    bottom-center. Polys are unit-height, y-up (see build_icons.py)."""
+    hgt = ICON_BASE_IN * s * inch
+    verts, codes = [], []
+    for ring in icon_def["polys"]:
+        pts = [(x + px * hgt, y + py * hgt) for px, py in ring]
+        verts.extend(pts + [pts[0]])
+        codes.extend([MplPath.MOVETO] + [MplPath.LINETO] * (len(pts) - 1)
+                     + [MplPath.CLOSEPOLY])
+    ax.add_patch(PathPatch(MplPath(verts, codes), facecolor=C_RELIEF,
+                           edgecolor="none", zorder=zorder))
+
+
 def draw_pennant(ax, x, y, inch, s, zorder):
     """Small triangular pennant on a mast, lettered IU."""
     unit = inch * s
@@ -530,6 +553,7 @@ def main(pictorial=True, label=None):
                 draw_bridge(ax, px, py, inch, 0.95, zorder=3.6)
             elif kind == "dune":
                 draw_dune(ax, px, py, inch, 0.95, zorder=3.6)
+            # kind "none": label only (a custom icon usually sits nearby)
             t = ax.annotate(
                 park["name"], (px, py), xytext=(park["dx"], park["dy"]),
                 textcoords="offset points", ha=park["ha"], va="center",
@@ -537,6 +561,15 @@ def main(pictorial=True, label=None):
                 fontsize=6.8, color=C_INK_SOFT, fontproperties=F_ITALIC, zorder=9,
             )
             t.set_path_effects(halo)
+
+        # Custom stencil icons (traced from the trip's illustrations)
+        for e in ICON_PLACEMENTS:
+            icon_def = ICON_DEFS.get(e["icon"])
+            if not icon_def:
+                print(f"  warning: unknown icon {e['icon']!r} skipped")
+                continue
+            px, py = project(e["lon"], e["lat"])
+            draw_icon(ax, icon_def, px, py, inch, e.get("scale", 1.0), zorder=3.7)
 
     # ── Route ───────────────────────────────────────────────────────────
     rx = [p[0] for p in proj_route]
@@ -582,17 +615,15 @@ def main(pictorial=True, label=None):
     ax.scatter(ovx, ovy, s=52, c=C_GOLD, edgecolors=C_INK, linewidths=1.1, zorder=7)
 
     if pictorial:
-        # A few decorative extras anchored to specific overnight markers.
+        # Decorative extras anchored to specific overnight markers. (The
+        # Minneapolis skyline was superseded by the custom viking icon.)
         extra_glyphs = {
-            "Minneapolis": ("skyline", 0.02 * inch, 0.16 * inch),
             "Bloomington": ("pennant", 0.15 * inch, 0.02 * inch),
         }
         for nm, px, py in labels:
             if nm in extra_glyphs:
                 kind, ox, oy = extra_glyphs[nm]
-                if kind == "skyline":
-                    draw_skyline(ax, px + ox, py + oy, inch, 0.9, zorder=6.2)
-                elif kind == "pennant":
+                if kind == "pennant":
                     draw_pennant(ax, px + ox, py + oy, inch, 1.0, zorder=6.2)
 
     # Waypoints: cities driven through but not stayed in.

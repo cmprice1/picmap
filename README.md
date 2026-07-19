@@ -111,6 +111,20 @@ browser text metrics) — the Python script is the source of truth for the
 actual print output. If the route ever changes, re-run
 `python build_editor_context.py` to refresh the editor's basemap/window.
 
+### Custom stencil icons
+
+`build_icons.py` traces the hand-drawn location illustrations (PNGs in
+the OneDrive `media\custom map location icons\` folder) into vector
+stencil outlines: downsample + blur + threshold to thicken fine linework
+to map scale, contour-trace with contourpy, simplify, and write
+normalized polygons to `assets/icons.json` (plus a proof sheet at
+`output/print/icon_contact_sheet.png`). Placements live in
+`map_layout.json` under `icons` (`{icon, lon, lat, scale}`) — drag,
+rescale, add, or delete them in the layout editor (each traced icon
+appears in the editor's "+ icon:" dropdown). Re-run `build_icons.py`
+after adding or replacing source PNGs; per-icon threshold overrides go
+in its `ICONS` dict.
+
 ## Secrets & big files (not in git)
 
 - `credentials.json`, `token.json`, `drive_token.json` — Google OAuth for

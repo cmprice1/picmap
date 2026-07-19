@@ -1,8 +1,8 @@
 {
   "label_style": {
     "Los Angeles": {
-      "dx": 0,
-      "dy": -4,
+      "dx": -7.7,
+      "dy": -2.9,
       "ha": "right",
       "va": "top"
     },
@@ -19,8 +19,8 @@
       "va": "center"
     },
     "Death Valley": {
-      "dx": -8.5,
-      "dy": 18,
+      "dx": -9,
+      "dy": 26,
       "ha": "left",
       "va": "center"
     },
@@ -60,15 +60,9 @@
       "ha": "right",
       "va": "center"
     },
-    "Paradise Valley": {
-      "dx": -12.8,
-      "dy": 36.6,
-      "ha": "left",
-      "va": "center"
-    },
     "The Tetons": {
-      "dx": -5,
-      "dy": -11,
+      "dx": -3.6,
+      "dy": -16,
       "ha": "right",
       "va": "center"
     },
@@ -85,8 +79,8 @@
       "va": "center"
     },
     "Black Hills": {
-      "dx": -41.4,
-      "dy": 2.5,
+      "dx": -40.9,
+      "dy": 4.6,
       "ha": "center",
       "va": "bottom"
     },
@@ -101,18 +95,6 @@
       "dy": 11,
       "ha": "center",
       "va": "bottom"
-    },
-    "Door County": {
-      "dx": -55.2,
-      "dy": -34.8,
-      "ha": "left",
-      "va": "center"
-    },
-    "Traverse City": {
-      "dx": 8.4,
-      "dy": -7.9,
-      "ha": "left",
-      "va": "center"
     },
     "Bloomington": {
       "dx": 9.5,
@@ -139,29 +121,54 @@
       "va": "center"
     },
     "UP": {
-      "dx": 2,
-      "dy": 12.3,
+      "dx": 3.6,
+      "dy": 19.7,
       "ha": "right",
       "va": "center"
     },
     "West\nYellowstone": {
-      "dx": 5,
-      "dy": 14,
-      "ha": "right",
+      "dx": -33.2,
+      "dy": 39.7,
+      "ha": "center",
+      "va": "top"
+    },
+    "Paradise \nValley": {
+      "dx": 18,
+      "dy": 39.6,
+      "ha": "center",
       "va": "center"
+    },
+    "Door \nCounty": {
+      "dx": -5.3,
+      "dy": -44.6,
+      "ha": "center",
+      "va": "center"
+    },
+    "Traverse \nCity": {
+      "dx": 36.1,
+      "dy": -11.6,
+      "ha": "center",
+      "va": "center"
+    },
+    "New Ulm": {
+      "dx": 0,
+      "dy": -12,
+      "ha": "center",
+      "va": "top"
     }
   },
   "display_names": {
     "Inyo County|2025-07-03": "Death Valley",
     "Washington County|2025-07-05": "Zion",
     "Blaine County|2025-07-10": "Sawtooth Valley",
-    "Park County|2025-07-17": "Paradise Valley",
+    "Park County|2025-07-17": "Paradise \nValley",
     "Teton County|2025-07-18": "The Tetons",
     "Park County|2025-07-20": "Yellowstone",
     "Lawrence County|2025-07-23": "Black Hills",
-    "Town of Egg Harbor|2025-07-27": "Door County",
+    "Town of Egg Harbor|2025-07-27": "Door \nCounty",
     "Stephenson Township|2025-07-29": "UP",
-    "West Yellowstone|2025-07-19": "West\nYellowstone"
+    "West Yellowstone|2025-07-19": "West\nYellowstone",
+    "Traverse City|2025-07-31": "Traverse \nCity"
   },
   "stop_overrides": {
     "Las Vegas|2025-07-03": {
@@ -180,7 +187,11 @@
       "lat": 39.1653,
       "lon": -86.5264
     },
-    "Surry County|2025-08-03": null
+    "Surry County|2025-08-03": null,
+    "Inyo County|2025-07-03": {
+      "lat": 36.6069,
+      "lon": -117.115
+    }
   },
   "mountains": [
     [
@@ -250,8 +261,8 @@
       true
     ],
     [
-      -113.1,
-      48.82,
+      -112.8489,
+      48.7694,
       1.05,
       true
     ],
@@ -329,8 +340,8 @@
       1
     ],
     [
-      -113.35,
-      47.1,
+      -113.2816,
+      47.2776,
       0.9
     ],
     [
@@ -371,13 +382,13 @@
       0.8
     ],
     [
-      -83.55,
-      39.55,
+      -83.005,
+      39.47,
       0.9
     ],
     [
-      -82.9,
-      38.45,
+      -82.848,
+      39.2639,
       0.85
     ]
   ],
@@ -459,42 +470,96 @@
   },
   "parks": [
     {
-      "name": "Glacier National Park",
-      "lon": -113.55,
-      "lat": 48.6,
+      "name": "Glacier \nNational Park",
+      "lon": -113.6996,
+      "lat": 48.8052,
       "kind": "mountain",
       "big": true,
-      "dx": 0.6,
-      "dy": -9.3,
-      "ha": "left"
+      "dx": 31.1,
+      "dy": -14.1,
+      "ha": "center"
     },
     {
-      "name": "Badlands",
+      "name": "Badlands\nNational Park",
       "lon": -102.2,
       "lat": 43.62,
       "kind": "mountain",
       "big": false,
-      "dx": 0,
-      "dy": -11,
+      "dx": 0.5,
+      "dy": -18.2,
       "ha": "center"
     },
     {
-      "name": "New River Gorge National Park",
-      "lon": -81.6463,
-      "lat": 37.6514,
+      "name": "New River Gorge \nNational Park",
+      "lon": -81.6193,
+      "lat": 37.7115,
       "kind": "bridge",
-      "dx": 8.4,
-      "dy": 12.1,
+      "dx": -54.3,
+      "dy": 7.9,
+      "ha": "center"
+    },
+    {
+      "name": "Indiana Dunes \nNational Park",
+      "lon": -86.3386,
+      "lat": 41.6149,
+      "kind": "dune",
+      "dx": 16.8,
+      "dy": -16,
+      "ha": "center"
+    },
+    {
+      "name": "Cedar Breaks",
+      "lon": -112.8453,
+      "lat": 37.6119,
+      "kind": "none",
+      "dx": 8,
+      "dy": 2,
+      "ha": "left"
+    },
+    {
+      "name": "Cathedral Gorge",
+      "lon": -114.4086,
+      "lat": 37.8103,
+      "kind": "none",
+      "dx": -8,
+      "dy": 2,
       "ha": "right"
     },
     {
-      "name": "Indiana Dunes National Park",
-      "lon": -87.05,
-      "lat": 41.63,
-      "kind": "dune",
-      "dx": 13.7,
-      "dy": 2.9,
+      "name": "Sleeping Bear Dunes",
+      "lon": -86.0432,
+      "lat": 44.8825,
+      "kind": "none",
+      "dx": -8,
+      "dy": 4,
+      "ha": "right"
+    },
+    {
+      "name": "Custer State Park",
+      "lon": -103.3995,
+      "lat": 43.7646,
+      "kind": "none",
+      "dx": 10,
+      "dy": -2,
       "ha": "left"
+    },
+    {
+      "name": "Mt Rushmore",
+      "lon": -103.4591,
+      "lat": 43.8791,
+      "kind": "none",
+      "dx": 0,
+      "dy": 12,
+      "ha": "center"
+    },
+    {
+      "name": "Crazy Horse Memorial",
+      "lon": -103.6222,
+      "lat": 43.8364,
+      "kind": "none",
+      "dx": -6,
+      "dy": -12,
+      "ha": "right"
     }
   ],
   "waypoints": [
@@ -512,6 +577,181 @@
       "name": "",
       "lon": -81.1666,
       "lat": 38.0101
+    },
+    {
+      "name": "New Ulm",
+      "lon": -94.4599,
+      "lat": 44.3122
+    }
+  ],
+  "icons": [
+    {
+      "icon": "la-house",
+      "lon": -117.55,
+      "lat": 33.55,
+      "scale": 1.15
+    },
+    {
+      "icon": "sb-palms",
+      "lon": -120.6,
+      "lat": 34.9,
+      "scale": 1.0
+    },
+    {
+      "icon": "paso-grapes",
+      "lon": -121.05,
+      "lat": 36.3,
+      "scale": 1.0
+    },
+    {
+      "icon": "dv-dunes",
+      "lon": -116.55,
+      "lat": 37.05,
+      "scale": 0.75
+    },
+    {
+      "icon": "zion-narrows",
+      "lon": -113.5,
+      "lat": 36.4,
+      "scale": 1.15
+    },
+    {
+      "icon": "cedar-breaks",
+      "lon": -112.15,
+      "lat": 37.85,
+      "scale": 1.0
+    },
+    {
+      "icon": "cathedral-gorge",
+      "lon": -115.4,
+      "lat": 37.35,
+      "scale": 1.0
+    },
+    {
+      "icon": "wendover-will",
+      "lon": -115.35,
+      "lat": 41.3,
+      "scale": 1.1
+    },
+    {
+      "icon": "sawtooth-bear",
+      "lon": -115.85,
+      "lat": 43.35,
+      "scale": 1.0
+    },
+    {
+      "icon": "missoula-grizzly",
+      "lon": -111.4,
+      "lat": 47.4,
+      "scale": 1.0
+    },
+    {
+      "icon": "kalispell-glacier",
+      "lon": -112.4,
+      "lat": 48.45,
+      "scale": 0.85
+    },
+    {
+      "icon": "paradise-tent",
+      "lon": -109.6,
+      "lat": 46.5,
+      "scale": 1.0
+    },
+    {
+      "icon": "wy-arch",
+      "lon": -113.15,
+      "lat": 44.3,
+      "scale": 1.05
+    },
+    {
+      "icon": "tetons",
+      "lon": -112.5,
+      "lat": 42.55,
+      "scale": 0.9
+    },
+    {
+      "icon": "old-faithful",
+      "lon": -109.75,
+      "lat": 43.5,
+      "scale": 1.1
+    },
+    {
+      "icon": "custer-burro",
+      "lon": -103.2,
+      "lat": 43.15,
+      "scale": 0.95
+    },
+    {
+      "icon": "rushmore",
+      "lon": -102.9,
+      "lat": 44.65,
+      "scale": 0.95
+    },
+    {
+      "icon": "crazy-horse",
+      "lon": -104.7,
+      "lat": 43.35,
+      "scale": 0.95
+    },
+    {
+      "icon": "badlands-chirps",
+      "lon": -100.9,
+      "lat": 42.9,
+      "scale": 1.0
+    },
+    {
+      "icon": "sioux-sunflower",
+      "lon": -96.35,
+      "lat": 42.45,
+      "scale": 1.0
+    },
+    {
+      "icon": "newulm-beer",
+      "lon": -94.25,
+      "lat": 43.65,
+      "scale": 0.95
+    },
+    {
+      "icon": "mpls-viking",
+      "lon": -93.15,
+      "lat": 45.75,
+      "scale": 1.0
+    },
+    {
+      "icon": "door-cider",
+      "lon": -88.75,
+      "lat": 44.6,
+      "scale": 0.9
+    },
+    {
+      "icon": "up-aframe",
+      "lon": -87.7,
+      "lat": 46.4,
+      "scale": 1.0
+    },
+    {
+      "icon": "tc-cherries",
+      "lon": -84.85,
+      "lat": 44.45,
+      "scale": 0.95
+    },
+    {
+      "icon": "sleeping-bear",
+      "lon": -87.45,
+      "lat": 45.35,
+      "scale": 0.9
+    },
+    {
+      "icon": "indiana-dunes",
+      "lon": -87.35,
+      "lat": 40.95,
+      "scale": 0.9
+    },
+    {
+      "icon": "nrg-bridge",
+      "lon": -82.75,
+      "lat": 37.3,
+      "scale": 1.0
     }
   ]
 }

@@ -26,6 +26,8 @@ const svg = $("map");
 let layout = null;        // editable model (mirrors map_layout.json)
 let ctx = null;           // {view_bbox, projection, states}
 let trip = null;          // output/data.json
+let iconDefs = {};        // assets/icons.json: traced stencil outlines
+const ICON_BASE_U = 35;   // icon height in svg units at scale 1.0 (0.35 in)
 let undoStack = [], redoStack = [];
 let dirty = false;
 let sel = null;           // {type, ...ref}
@@ -222,6 +224,28 @@ function renderDyn() {
     markSel(t, { type: "park-label", idx });
   });
 
+  // Custom stencil icons (traced outlines from assets/icons.json)
+  (layout.icons || []).forEach((e, idx) => {
+    const def = iconDefs[e.icon];
+    const [u, v] = llToU(e.lon, e.lat);
+    const H = ICON_BASE_U * (e.scale ?? 1);
+    const g = el("g", { transform: `translate(${u} ${v})`, class: "glyph" }, gDyn);
+    if (def) {
+      const d = def.polys.map(r =>
+        "M" + r.map(p => p[0].toFixed(3) + " " + p[1].toFixed(3)).join("L") + "Z"
+      ).join("");
+      el("path", { d, transform: `scale(${H} ${-H})`, fill: "#8E7E66",
+                   "fill-rule": "evenodd", stroke: "none" }, g);
+      const w = Math.max(0.6, def.aspect || 1) * H;
+      el("rect", { x: -w / 2, y: -H, width: w, height: H, class: "hit" }, g);
+    } else {
+      el("path", { d: "M-5 -5 L5 5 M-5 5 L5 -5", class: "shape" }, g);
+      el("circle", { r: 13, class: "hit" }, g);
+    }
+    attachDrag(g, { type: "icon", idx });
+    markSel(g, { type: "icon", idx }, u, v);
+  });
+
   // Waypoint cities
   layout.waypoints.forEach((w, idx) => {
     const [u, v] = llToU(w.lon, w.lat);
@@ -387,6 +411,9 @@ function applyDrag(ref, snap, du, dv, cur) {
   } else if (ref.type === "wp") {
     const [lon, lat] = uToLL(...cur);
     layout.waypoints[ref.idx] = { ...snap.waypoints[ref.idx], lon: r4(lon), lat: r4(lat) };
+  } else if (ref.type === "icon") {
+    const [lon, lat] = uToLL(...cur);
+    layout.icons[ref.idx] = { ...snap.icons[ref.idx], lon: r4(lon), lat: r4(lat) };
   } else if (ref.type === "lake") {
     const [sl, sb] = uToLL(cur[0] - du, cur[1] - dv);
     const [cl, cb] = uToLL(...cur);
@@ -477,6 +504,10 @@ function placeAt([u, v]) {
   } else if (placing === "waypoint") {
     layout.waypoints.push({ name: "New City", lon, lat });
     newSel = { type: "wp", idx: layout.waypoints.length - 1 };
+  } else if (placing.startsWith("icon:")) {
+    layout.icons = layout.icons || [];
+    layout.icons.push({ icon: placing.slice(5), lon, lat, scale: 1.0 });
+    newSel = { type: "icon", idx: layout.icons.length - 1 };
   }
   placing = null;
   svg.classList.remove("placing");
@@ -492,6 +523,7 @@ function deleteSelected() {
   else if (sel.type === "brd") layout.broadleaf.splice(sel.idx, 1);
   else if (sel.type === "park" || sel.type === "park-label") layout.parks.splice(sel.idx, 1);
   else if (sel.type === "wp") layout.waypoints.splice(sel.idx, 1);
+  else if (sel.type === "icon") layout.icons.splice(sel.idx, 1);
   else if (sel.type === "lake") delete layout.lakes[sel.name];
   else return;
   commit(snap);
@@ -554,6 +586,10 @@ function refreshLists() {
     listItem(G, { type: "lake", name }, name, "lake"));
   layout.waypoints.forEach((w, idx) =>
     listItem(G, { type: "wp", idx }, w.name, "city marker"));
+
+  const I = $("list-icons"); I.replaceChildren();
+  (layout.icons || []).forEach((e, idx) =>
+    listItem(I, { type: "icon", idx }, e.icon, "icon"));
 
   const H = $("list-hidden"); H.replaceChildren();
   for (const [key, ov] of Object.entries(layout.stop_overrides)) {
@@ -724,6 +760,15 @@ function renderProps() {
       migrateLabelStyle(w.name, v); w.name = v;
     }));
     addDelete(btnrow);
+  } else if (sel.type === "icon") {
+    const e = layout.icons[sel.idx];
+    title.textContent = `Icon: ${e.icon}`;
+    propRow(box, "icon", selInput(Object.keys(iconDefs).sort(), e.icon,
+      v => mutate(() => { e.icon = v; })));
+    propRow(box, "scale", numInput(e.scale ?? 1, 0.05, v => mutate(() => { e.scale = v; })));
+    propRow(box, "lon", numInput(e.lon, 0.01, v => mutate(() => { e.lon = v; })));
+    propRow(box, "lat", numInput(e.lat, 0.01, v => mutate(() => { e.lat = v; })));
+    addDelete(btnrow);
   } else if (sel.type === "lake") {
     title.textContent = `Lake: ${sel.name}`;
     const p = document.createElement("div");
@@ -854,12 +899,20 @@ window.addEventListener("beforeunload", evt => { if (dirty) evt.preventDefault()
 // ── Boot ─────────────────────────────────────────────────────────────────
 (async function boot() {
   try {
-    const [l, d, c] = await Promise.all([
+    const [l, d, c, ic] = await Promise.all([
       fetch("map_layout.json").then(r => r.json()),
       fetch("output/data.json").then(r => r.json()),
       fetch("assets/editor_context.json").then(r => r.json()),
+      fetch("assets/icons.json").then(r => r.ok ? r.json() : {}).catch(() => ({})),
     ]);
-    layout = l; trip = d; ctx = c;
+    layout = l; trip = d; ctx = c; iconDefs = ic;
+    // one "+ icon" entry per traced icon so new instances can be placed
+    for (const key of Object.keys(iconDefs).sort()) {
+      const op = document.createElement("option");
+      op.value = "icon:" + key;
+      op.textContent = "+ icon: " + key;
+      $("addKind").appendChild(op);
+    }
     initProjection(ctx.projection);
     buildStatic();
     renderDyn();
