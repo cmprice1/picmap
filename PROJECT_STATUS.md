@@ -51,6 +51,15 @@ when returning to the project.
 - New: `build_print_map.py`, `assets/us-states-10m.json`, `output/print/*`,
   this file, rewritten `README.md`.
 
+## Layout editor (added July 19, 2026)
+
+All hand-tuned print-map positioning now lives in `map_layout.json`
+(extracted from `build_print_map.py`, verified byte-identical render).
+`python serve_editor.py` → http://localhost:8081/map_editor.html gives a
+drag-and-drop editor for labels/glyphs with save + a "Render poster"
+button. `build_editor_context.py` regenerates the editor's basemap data if
+the route changes. See MAP_EDITOR_PLAN.md (implemented) and README.md.
+
 ## Cleanup log
 
 Done July 18, 2026:

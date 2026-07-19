@@ -1,0 +1,511 @@
+{
+  "label_style": {
+    "Los Angeles": {
+      "dx": -8,
+      "dy": -4,
+      "ha": "right",
+      "va": "top"
+    },
+    "Santa Barbara": {
+      "dx": -9,
+      "dy": 2,
+      "ha": "right",
+      "va": "center"
+    },
+    "Paso Robles": {
+      "dx": -9,
+      "dy": 4,
+      "ha": "right",
+      "va": "center"
+    },
+    "Death Valley": {
+      "dx": 8,
+      "dy": -9,
+      "ha": "left",
+      "va": "center"
+    },
+    "Pahrump": {
+      "dx": -9,
+      "dy": -8,
+      "ha": "right",
+      "va": "center"
+    },
+    "Zion": {
+      "dx": 9,
+      "dy": -3,
+      "ha": "left",
+      "va": "center"
+    },
+    "Wendover": {
+      "dx": -10,
+      "dy": 0,
+      "ha": "right",
+      "va": "center"
+    },
+    "Sawtooth Valley": {
+      "dx": -10,
+      "dy": 2,
+      "ha": "right",
+      "va": "center"
+    },
+    "Missoula": {
+      "dx": -10,
+      "dy": 2,
+      "ha": "right",
+      "va": "center"
+    },
+    "Kalispell": {
+      "dx": -10,
+      "dy": 3,
+      "ha": "right",
+      "va": "center"
+    },
+    "Paradise Valley": {
+      "dx": 9,
+      "dy": 17,
+      "ha": "left",
+      "va": "center"
+    },
+    "The Tetons": {
+      "dx": -10,
+      "dy": -3,
+      "ha": "right",
+      "va": "center"
+    },
+    "West Yellowstone": {
+      "dx": -13,
+      "dy": -1,
+      "ha": "right",
+      "va": "center"
+    },
+    "Yellowstone": {
+      "dx": 14,
+      "dy": -16,
+      "ha": "left",
+      "va": "center"
+    },
+    "Billings": {
+      "dx": 10,
+      "dy": 8,
+      "ha": "left",
+      "va": "center"
+    },
+    "Black Hills": {
+      "dx": 0,
+      "dy": 11,
+      "ha": "center",
+      "va": "bottom"
+    },
+    "Sioux Falls": {
+      "dx": 0,
+      "dy": -12,
+      "ha": "center",
+      "va": "top"
+    },
+    "Minneapolis": {
+      "dx": -4,
+      "dy": 11,
+      "ha": "center",
+      "va": "bottom"
+    },
+    "Door County": {
+      "dx": 11,
+      "dy": -16,
+      "ha": "left",
+      "va": "center"
+    },
+    "Cedar River": {
+      "dx": -10,
+      "dy": 5,
+      "ha": "right",
+      "va": "center"
+    },
+    "Traverse City": {
+      "dx": 8,
+      "dy": -13,
+      "ha": "left",
+      "va": "center"
+    },
+    "Bloomington": {
+      "dx": -11,
+      "dy": -7,
+      "ha": "right",
+      "va": "center"
+    },
+    "Cincinnati": {
+      "dx": -2,
+      "dy": -12,
+      "ha": "center",
+      "va": "top"
+    },
+    "Durham": {
+      "dx": -2,
+      "dy": 11,
+      "ha": "center",
+      "va": "bottom"
+    },
+    "Raleigh": {
+      "dx": 10,
+      "dy": -4,
+      "ha": "left",
+      "va": "center"
+    }
+  },
+  "display_names": {
+    "Inyo County|2025-07-03": "Death Valley",
+    "Washington County|2025-07-05": "Zion",
+    "Blaine County|2025-07-10": "Sawtooth Valley",
+    "Park County|2025-07-17": "Paradise Valley",
+    "Teton County|2025-07-18": "The Tetons",
+    "Park County|2025-07-20": "Yellowstone",
+    "Lawrence County|2025-07-23": "Black Hills",
+    "Town of Egg Harbor|2025-07-27": "Door County",
+    "Stephenson Township|2025-07-29": "Cedar River"
+  },
+  "stop_overrides": {
+    "Las Vegas|2025-07-03": {
+      "name": "Pahrump",
+      "lat": 36.2083,
+      "lon": -115.9839
+    },
+    "Carbon County|2025-07-20": {
+      "name": "Billings",
+      "lat": 45.7833,
+      "lon": -108.5007
+    },
+    "Moran Township|2025-07-30": null,
+    "Cincinnati|2025-08-02": {
+      "name": "Bloomington",
+      "lat": 39.1653,
+      "lon": -86.5264
+    },
+    "Surry County|2025-08-03": null
+  },
+  "mountains": [
+    [
+      -118.6,
+      36.55,
+      0.85,
+      false
+    ],
+    [
+      -118.85,
+      36.95,
+      0.95,
+      false
+    ],
+    [
+      -119.1,
+      37.35,
+      0.8,
+      false
+    ],
+    [
+      -115.85,
+      38.7,
+      0.8,
+      false
+    ],
+    [
+      -116.5,
+      39.7,
+      0.9,
+      false
+    ],
+    [
+      -115.35,
+      44.3,
+      1.25,
+      true
+    ],
+    [
+      -115,
+      44.5,
+      1.05,
+      true
+    ],
+    [
+      -115.55,
+      44.15,
+      0.95,
+      true
+    ],
+    [
+      -114.75,
+      46.05,
+      1.15,
+      true
+    ],
+    [
+      -114.95,
+      46.5,
+      1.25,
+      true
+    ],
+    [
+      -114.35,
+      48.5,
+      1.3,
+      true
+    ],
+    [
+      -113.1,
+      48.82,
+      1.05,
+      true
+    ],
+    [
+      -109.55,
+      44.52,
+      1.15,
+      true
+    ],
+    [
+      -109.1,
+      44.62,
+      0.95,
+      true
+    ],
+    [
+      -108.75,
+      45.35,
+      0.85,
+      true
+    ],
+    [
+      -110.72,
+      43.15,
+      1.3,
+      true
+    ],
+    [
+      -104.25,
+      43.95,
+      0.75,
+      false
+    ],
+    [
+      -104.1,
+      43.65,
+      0.85,
+      false
+    ],
+    [
+      -112.72,
+      36.95,
+      0.7,
+      false
+    ],
+    [
+      -80.15,
+      38.4,
+      0.9,
+      false
+    ],
+    [
+      -80.5,
+      37.75,
+      1,
+      false
+    ],
+    [
+      -80.45,
+      37.35,
+      0.8,
+      false
+    ],
+    [
+      -79.85,
+      38.75,
+      0.75,
+      false
+    ]
+  ],
+  "conifers": [
+    [
+      -114.95,
+      47.5,
+      1
+    ],
+    [
+      -113.35,
+      47.1,
+      0.9
+    ],
+    [
+      -116.1,
+      45.2,
+      0.8
+    ],
+    [
+      -111.85,
+      44.25,
+      0.85
+    ],
+    [
+      -94.5,
+      46.55,
+      0.95
+    ],
+    [
+      -89.7,
+      45.85,
+      1
+    ],
+    [
+      -88.7,
+      46.25,
+      0.9
+    ],
+    [
+      -86.25,
+      46.3,
+      0.85
+    ]
+  ],
+  "broadleaf": [
+    [
+      -120,
+      35.85,
+      0.8
+    ],
+    [
+      -83.55,
+      39.55,
+      0.9
+    ],
+    [
+      -82.9,
+      38.45,
+      0.85
+    ]
+  ],
+  "lakes": {
+    "Redfish Lake": [
+      [
+        -115.133,
+        44.082
+      ],
+      [
+        -115.053,
+        44.13
+      ],
+      [
+        -115.013,
+        44.098
+      ],
+      [
+        -115.033,
+        44.042
+      ],
+      [
+        -115.105,
+        44.018
+      ],
+      [
+        -115.145,
+        44.05
+      ]
+    ],
+    "Flathead Lake": [
+      [
+        -114.32,
+        47.95
+      ],
+      [
+        -114.15,
+        48.05
+      ],
+      [
+        -113.98,
+        47.95
+      ],
+      [
+        -113.95,
+        47.78
+      ],
+      [
+        -114.08,
+        47.66
+      ],
+      [
+        -114.25,
+        47.72
+      ]
+    ],
+    "Yellowstone Lake": [
+      [
+        -110.5,
+        44.48
+      ],
+      [
+        -110.32,
+        44.54
+      ],
+      [
+        -110.2,
+        44.44
+      ],
+      [
+        -110.28,
+        44.32
+      ],
+      [
+        -110.5,
+        44.36
+      ]
+    ]
+  },
+  "parks": [
+    {
+      "name": "Glacier National Park",
+      "lon": -113.55,
+      "lat": 48.6,
+      "kind": "mountain",
+      "big": true,
+      "dx": 7,
+      "dy": -2,
+      "ha": "left"
+    },
+    {
+      "name": "Badlands",
+      "lon": -102.2,
+      "lat": 43.62,
+      "kind": "mountain",
+      "big": false,
+      "dx": 0,
+      "dy": -11,
+      "ha": "center"
+    },
+    {
+      "name": "New River Gorge National Park",
+      "lon": -81.95,
+      "lat": 37.72,
+      "kind": "bridge",
+      "dx": -7,
+      "dy": -2,
+      "ha": "right"
+    },
+    {
+      "name": "Indiana Dunes National Park",
+      "lon": -87.05,
+      "lat": 41.63,
+      "kind": "dune",
+      "dx": 9,
+      "dy": 8,
+      "ha": "left"
+    }
+  ],
+  "waypoints": [
+    {
+      "name": "Cincinnati",
+      "lon": -84.512,
+      "lat": 39.103
+    },
+    {
+      "name": "Durham",
+      "lon": -78.8986,
+      "lat": 35.994
+    }
+  ]
+}

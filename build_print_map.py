@@ -103,149 +103,38 @@ TRIP_TITLE = "THE GREAT AMERICAN ROAD TRIP"
 TRIP_SUBTITLE = "LOS ANGELES  TO  RALEIGH"
 TRIP_DATES = "JUNE 28 – AUGUST 3, 2025"
 
-# Display names for overnight stops. Keys are (data.json name, arrival date).
-# County-level geocodes are mapped to the actual place per stop coordinates.
-DISPLAY_NAMES = {
-    ("Inyo County", "2025-07-03"): "Death Valley",
-    ("Washington County", "2025-07-05"): "Zion",
-    ("Blaine County", "2025-07-10"): "Sawtooth Valley",
-    ("Park County", "2025-07-17"): "Paradise Valley",
-    ("Teton County", "2025-07-18"): "The Tetons",
-    ("Park County", "2025-07-20"): "Yellowstone",
-    ("Lawrence County", "2025-07-23"): "Black Hills",
-    ("Town of Egg Harbor", "2025-07-27"): "Door County",
-    ("Stephenson Township", "2025-07-29"): "Cedar River",
-}
+# ── Layout data (map_layout.json) ────────────────────────────────────────
+# All hand-tuned positioning lives in map_layout.json so the drag-and-drop
+# editor (map_editor.html, served by serve_editor.py) can adjust it without
+# touching this script. Schema notes:
+#   display_names / stop_overrides — keyed "name|arrival-date" (JSON has no
+#     tuple keys); reconstructed into tuples below.
+#   stop_overrides — null removes a stop's marker+label; a dict overrides
+#     the display name and/or plotted lat/lon while leaving the GPS route
+#     untouched.
+#   mountains/conifers/broadleaf — [lon, lat, scale(, big)] entries.
+#   lakes — name -> polygon ring of [lon, lat].
+#   parks — labeled pictorial features (kind: mountain/tree/bridge/dune/...).
+#   waypoints — drive-through cities: small neutral marker + plain label.
+LAYOUT_PATH = ROOT / "map_layout.json"
 
-# Corrections where the geocoded stop is wrong (a nearby city was recorded,
-# but the trip actually lodged elsewhere) or the stop should not be shown at
-# all. Keys are (data.json name, arrival date), same as DISPLAY_NAMES.
-# A value of None removes the marker + label entirely; a dict overrides the
-# display name and/or the plotted lat/lon (looked-up town coordinates,
-# real-world sourced) while leaving the underlying GPS route untouched.
-STOP_OVERRIDES = {
-    ("Las Vegas", "2025-07-03"): dict(name="Pahrump", lat=36.2083, lon=-115.9839),
-    ("Carbon County", "2025-07-20"): dict(name="Billings", lat=45.7833, lon=-108.5007),
-    ("Moran Township", "2025-07-30"): None,   # did not stay in St. Ignace
-    ("Cincinnati", "2025-08-02"): dict(name="Bloomington", lat=39.1653, lon=-86.5264),
-    ("Surry County", "2025-08-03"): None,     # did not stop in Mount Airy
-}
 
-# Cities the route drove through but didn't stay in — a small neutral
-# marker + plain label, no gold overnight styling.
-WAYPOINTS = [
-    dict(name="Cincinnati", lon=-84.512, lat=39.103),
-    dict(name="Durham", lon=-78.8986, lat=35.9940),
-]
+def _tuple_keys(d):
+    return {tuple(k.split("|", 1)): v for k, v in d.items()}
 
-# Label placement overrides, keyed by display name.
-# dx/dy in points relative to the marker; ha/va matplotlib alignment.
-LABEL_STYLE = {
-    "Los Angeles":     dict(dx=-8, dy=-4, ha="right", va="top"),
-    "Santa Barbara":   dict(dx=-9, dy=2, ha="right", va="center"),
-    "Paso Robles":     dict(dx=-9, dy=4, ha="right", va="center"),
-    "Death Valley":    dict(dx=8, dy=-9, ha="left", va="center"),
-    "Pahrump":         dict(dx=-9, dy=-8, ha="right", va="center"),
-    "Zion":            dict(dx=9, dy=-3, ha="left", va="center"),
-    "Wendover":        dict(dx=-10, dy=0, ha="right", va="center"),
-    "Sawtooth Valley": dict(dx=-10, dy=2, ha="right", va="center"),
-    "Missoula":        dict(dx=-10, dy=2, ha="right", va="center"),
-    "Kalispell":       dict(dx=-10, dy=3, ha="right", va="center"),
-    "Paradise Valley": dict(dx=9, dy=17, ha="left", va="center"),
-    "The Tetons":      dict(dx=-10, dy=-3, ha="right", va="center"),
-    "West Yellowstone": dict(dx=-13, dy=-1, ha="right", va="center"),
-    "Yellowstone":     dict(dx=14, dy=-16, ha="left", va="center"),
-    "Billings":        dict(dx=10, dy=8, ha="left", va="center"),
-    "Black Hills":     dict(dx=0, dy=11, ha="center", va="bottom"),
-    "Sioux Falls":     dict(dx=0, dy=-12, ha="center", va="top"),
-    "Minneapolis":     dict(dx=-4, dy=11, ha="center", va="bottom"),
-    "Door County":     dict(dx=11, dy=-16, ha="left", va="center"),
-    "Cedar River":     dict(dx=-10, dy=5, ha="right", va="center"),
-    "Traverse City":   dict(dx=8, dy=-13, ha="left", va="center"),
-    "Bloomington":     dict(dx=-11, dy=-7, ha="right", va="center"),
-    "Cincinnati":      dict(dx=-2, dy=-12, ha="center", va="top"),
-    "Durham":          dict(dx=-2, dy=11, ha="center", va="bottom"),
-    "Raleigh":         dict(dx=10, dy=-4, ha="left", va="center"),
-}
 
-# ── Pictorial layer ──────────────────────────────────────────────────────
-# All positions are (lon, lat, scale, big). Only geography the trip
-# actually touched: ranges flanking the drive, forests along it, lakes
-# seen from the road, and parks evidenced by day-stop clusters in the
-# data. `big` selects the taller 3-peak Rockies-style silhouette over the
-# smaller 2-peak Sierra/foothill style.
-MOUNTAINS = [
-    # Sierra Nevada (CA, west of the Owens Valley leg) — smaller, foothill-scale
-    (-118.60, 36.55, 0.85, False), (-118.85, 36.95, 0.95, False), (-119.10, 37.35, 0.80, False),
-    # Great Basin ranges (US-93 crossing, Nevada) — modest, not full Rockies
-    (-115.85, 38.70, 0.80, False), (-116.50, 39.70, 0.90, False),
-    # Sawtooths (Idaho) — Rockies-scale, dense
-    (-115.35, 44.30, 1.25, True), (-115.00, 44.50, 1.05, True), (-115.55, 44.15, 0.95, True),
-    # Bitterroots (Montana/Idaho line) — Rockies-scale
-    (-114.75, 46.05, 1.15, True), (-114.95, 46.50, 1.25, True),
-    # Glacier country — Rockies-scale
-    (-114.35, 48.50, 1.30, True), (-113.10, 48.82, 1.05, True),
-    # Absaroka-Beartooth (Yellowstone -> Billings corridor) — Rockies-scale, dense
-    (-109.55, 44.52, 1.15, True), (-109.10, 44.62, 0.95, True), (-108.75, 45.35, 0.85, True),
-    # Tetons (south of Jackson, Snake River country) — tallest, sharpest
-    (-110.72, 43.15, 1.30, True),
-    # Black Hills — small, distinct range, unaffected by the Rockies/CA split
-    (-104.25, 43.95, 0.75, False), (-104.10, 43.65, 0.85, False),
-    # Zion high country — plateau/canyon country, unaffected
-    (-112.72, 36.95, 0.70, False),
-    # Appalachians / Blue Ridge (WV-VA-NC) — unaffected
-    (-80.15, 38.40, 0.90, False), (-80.50, 37.75, 1.00, False), (-80.45, 37.35, 0.80, False),
-    (-79.85, 38.75, 0.75, False),
-]
+_layout = json.loads(LAYOUT_PATH.read_text(encoding="utf-8"))
+DISPLAY_NAMES = _tuple_keys(_layout["display_names"])
+STOP_OVERRIDES = _tuple_keys(_layout["stop_overrides"])
 
-CONIFERS = [
-    # Montana / Idaho forests
-    (-114.95, 47.50, 1.00), (-113.35, 47.10, 0.90), (-116.10, 45.20, 0.80),
-    # Lodgepole country west of Yellowstone
-    (-111.85, 44.25, 0.85),
-    # Northwoods: Minnesota, Wisconsin, Michigan UP
-    (-94.50, 46.55, 0.95), (-89.70, 45.85, 1.00), (-88.70, 46.25, 0.90),
-    (-86.25, 46.30, 0.85),
-]
+WAYPOINTS = _layout["waypoints"]
 
-BROADLEAF = [
-    # California oaks near the 101
-    (-120.00, 35.85, 0.80),
-    # Ohio Valley hardwoods
-    (-83.55, 39.55, 0.90), (-82.90, 38.45, 0.85),
-]
-
-# Stylized lakes the route ran alongside (simplified shapes).
-LAKES = {
-    # True extent is only ~2km and it sits right on the Sawtooth Valley
-    # stop/route at this map scale — stylized larger and nudged into the
-    # open ground to the southwest so it reads as its own shape.
-    "Redfish Lake": [
-        (-115.133, 44.082), (-115.053, 44.130), (-115.013, 44.098),
-        (-115.033, 44.042), (-115.105, 44.018), (-115.145, 44.050),
-    ],
-    "Flathead Lake": [
-        (-114.32, 47.95), (-114.15, 48.05), (-113.98, 47.95), (-113.95, 47.78),
-        (-114.08, 47.66), (-114.25, 47.72),
-    ],
-    "Yellowstone Lake": [
-        (-110.50, 44.48), (-110.32, 44.54), (-110.20, 44.44), (-110.28, 44.32),
-        (-110.50, 44.36),
-    ],
-}
-
-# Parks with day-stop evidence in data.json that lack an overnight label.
-# (glyph kind, label position/alignment; `big` applies to kind="mountain")
-PARKS = [
-    dict(name="Glacier National Park", lon=-113.55, lat=48.60, kind="mountain",
-         big=True, dx=7, dy=-2, ha="left"),
-    dict(name="Badlands", lon=-102.20, lat=43.62, kind="mountain",
-         big=False, dx=0, dy=-11, ha="center"),
-    dict(name="New River Gorge National Park", lon=-81.95, lat=37.72, kind="bridge",
-         dx=-7, dy=-2, ha="right"),
-    dict(name="Indiana Dunes National Park", lon=-87.05, lat=41.63, kind="dune",
-         dx=9, dy=8, ha="left"),
-]
+LABEL_STYLE = _layout["label_style"]
+MOUNTAINS = [tuple(e) for e in _layout["mountains"]]
+CONIFERS = [tuple(e) for e in _layout["conifers"]]
+BROADLEAF = [tuple(e) for e in _layout["broadleaf"]]
+LAKES = {k: [tuple(p) for p in v] for k, v in _layout["lakes"].items()}
+PARKS = _layout["parks"]
 
 
 # ── TopoJSON decoding (pure python) ──────────────────────────────────────

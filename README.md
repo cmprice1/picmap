@@ -78,12 +78,33 @@ Pass `--plain` for the route + state outlines only (no mountains/trees/
 lakes/park markers), written to `roadtrip_print_24x12_plain.{svg,png}` +
 its own `versions/` entries.
 
-Stop display names, per-stop corrections, and label positions are
-hand-tuned in `DISPLAY_NAMES` / `STOP_OVERRIDES` / `LABEL_STYLE` at the top
-of the script; pictorial glyph placements are in `MOUNTAINS` / `CONIFERS`
-/ `BROADLEAF` / `LAKES` / `PARKS`. Page size, palette, and fonts are
-constants there too. Fonts: DM Sans + Pinyon Script (`assets/fonts/`,
-matches the web app), falling back to Windows system fonts if missing.
+All hand-tuned positioning (label offsets, per-stop corrections, glyph
+coordinates) lives in **`map_layout.json`**, which the script loads at
+startup. Page size, palette, and fonts remain constants in the script.
+Fonts: DM Sans + Pinyon Script (`assets/fonts/`, matches the web app),
+falling back to Windows system fonts if missing.
+
+### Layout editor (drag-and-drop positioning)
+
+```bash
+python serve_editor.py
+# open http://localhost:8081/map_editor.html
+```
+
+A browser editor for `map_layout.json`: drag stop labels and pictorial
+glyphs (mountains, trees, lakes, park markers) into place on an
+approximate preview — the side panel selects crowded items, edits
+anchoring (`ha`/`va`), scale, and names, adds/removes glyphs, and can
+hide stops. **Save** writes back to `map_layout.json` (with a `.bak`);
+**Render poster** runs `build_print_map.py` for a real print-quality
+check (`open last render`). Undo/redo with Ctrl+Z / Ctrl+Y; wheel zooms,
+background-drag pans. Check "allow dragging stop markers" to move a
+stop's corrected lat/lon rather than its label.
+
+The preview is intentionally approximate (placeholder glyph shapes,
+browser text metrics) — the Python script is the source of truth for the
+actual print output. If the route ever changes, re-run
+`python build_editor_context.py` to refresh the editor's basemap/window.
 
 ## Secrets & big files (not in git)
 

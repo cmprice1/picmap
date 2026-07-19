@@ -52,3 +52,6 @@ drive_token.json
 
 # Large local-only archives
 curated_photos.zip
+
+# Editor save backup
+map_layout.json.bak
