@@ -1,7 +1,7 @@
 {
   "label_style": {
     "Los Angeles": {
-      "dx": -8,
+      "dx": 0,
       "dy": -4,
       "ha": "right",
       "va": "top"
@@ -19,19 +19,19 @@
       "va": "center"
     },
     "Death Valley": {
-      "dx": 8,
-      "dy": -9,
+      "dx": -8.5,
+      "dy": 18,
       "ha": "left",
       "va": "center"
     },
     "Pahrump": {
-      "dx": -9,
-      "dy": -8,
+      "dx": 24,
+      "dy": -26,
       "ha": "right",
       "va": "center"
     },
     "Zion": {
-      "dx": 9,
+      "dx": 20,
       "dy": -3,
       "ha": "left",
       "va": "center"
@@ -67,14 +67,8 @@
       "va": "center"
     },
     "The Tetons": {
-      "dx": -10,
-      "dy": -3,
-      "ha": "right",
-      "va": "center"
-    },
-    "West Yellowstone": {
-      "dx": -13,
-      "dy": -1,
+      "dx": -5,
+      "dy": -11,
       "ha": "right",
       "va": "center"
     },
@@ -149,6 +143,12 @@
       "dy": -4,
       "ha": "left",
       "va": "center"
+    },
+    "West                 Yellowstone": {
+      "dx": 5,
+      "dy": 14,
+      "ha": "right",
+      "va": "center"
     }
   },
   "display_names": {
@@ -160,7 +160,8 @@
     "Park County|2025-07-20": "Yellowstone",
     "Lawrence County|2025-07-23": "Black Hills",
     "Town of Egg Harbor|2025-07-27": "Door County",
-    "Stephenson Township|2025-07-29": "Cedar River"
+    "Stephenson Township|2025-07-29": "Cedar River",
+    "West Yellowstone|2025-07-19": "West                 Yellowstone"
   },
   "stop_overrides": {
     "Las Vegas|2025-07-03": {

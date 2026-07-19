@@ -305,16 +305,23 @@ function markSel(node, ref, u, v) {
 }
 
 // ── Dragging ─────────────────────────────────────────────────────────────
+// Listeners go on `window`, not the pressed node: renderDyn() rebuilds the
+// dynamic layer during drags (replaceChildren), which destroys the pressed
+// element — node-scoped listeners (and its pointer capture) would die with
+// it and the drag would stall after the first frame.
 function attachDrag(node, ref) {
   node.addEventListener("pointerdown", evt => {
+    if (evt.button !== 0) return;
     evt.stopPropagation();
+    evt.preventDefault();
     select(ref);
+    const pid = evt.pointerId;
     const start = clientToU(evt);
     const snapshot = structuredClone(layout);
     let moved = false;
-    try { node.setPointerCapture(evt.pointerId); } catch (_) { /* synthetic events */ }
 
     const onMove = mv => {
+      if (mv.pointerId !== pid) return;
       const cur = clientToU(mv);
       const du = cur[0] - start[0], dv = cur[1] - start[1];
       if (!moved && Math.hypot(du, dv) < 1.5) return;
@@ -322,14 +329,17 @@ function attachDrag(node, ref) {
       applyDrag(ref, snapshot, du, dv, cur);
       requestRender();
     };
-    const onUp = () => {
-      node.removeEventListener("pointermove", onMove);
-      node.removeEventListener("pointerup", onUp);
+    const onUp = up => {
+      if (up.pointerId !== pid) return;
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
       if (moved) commit(snapshot);
       renderDyn(); renderProps();
     };
-    node.addEventListener("pointermove", onMove);
-    node.addEventListener("pointerup", onUp);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
   });
 }
 
